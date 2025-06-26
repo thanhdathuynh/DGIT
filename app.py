@@ -17,7 +17,7 @@ def index():
             error = "Please select a type and enter a query."
         elif search_type not in ['gene', 'drug']:
             error = "Type must be 'gene' or 'drug'."
-        else:
+        else:  #search interaction by gene
             if search_type == 'gene':
                 query = """
                 query($names: [String!]!) {
@@ -48,7 +48,7 @@ def index():
                   }
                 }
                 """
-            else:  # drug
+            else:  # search interaction by drug
                 query = """
                 query($names: [String!]!) {
                   drugs(names: $names) {
