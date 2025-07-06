@@ -4,6 +4,32 @@ import requests
 app = Flask(__name__)
 DGIDB_API_URL = "https://dgidb.org/api/graphql"
 
+MDD_GENES = [
+    "SLC6A4",
+    "BDNF",
+    "HTR2A",
+    "COMT",
+    "TPH2",
+    "MAOA",
+    "SLC6A3",
+    "NR3C1",
+    "CRHR1",
+    "FKBP5",
+]
+
+MDD_DRUGS = [
+    "Fluoxetine",
+    "Sertraline",
+    "Venlafaxine",
+    "Paroxetine",
+    "Citalopram",
+    "Escitalopram",
+    "Duloxetine",
+    "Bupropion",
+    "Mirtazapine",
+    "Amitriptyline",
+]
+
 @app.route('/', methods=['GET', 'POST'])
 def index():
     results = None
