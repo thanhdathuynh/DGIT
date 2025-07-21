@@ -8,26 +8,26 @@ MDD_GENES = [
     "SLC6A4",
     "BDNF",
     "HTR2A",
-    "COMT",
     "TPH2",
-    "MAOA",
-    "SLC6A3",
-    "NR3C1",
-    "CRHR1",
-    "FKBP5",
+    "GNB3",
+    "MTHFR",
+    "DRD2",
+    "CELF4",
+    "LAMB2",
+    "FKBP5"
 ]
 
 MDD_DRUGS = [
     "Fluoxetine",
     "Sertraline",
     "Venlafaxine",
-    "Paroxetine",
+    "Levomilnacipran",
     "Citalopram",
     "Escitalopram",
-    "Duloxetine",
-    "Bupropion",
+    "Milnacipran",
+    "Trazodone",
     "Mirtazapine",
-    "Amitriptyline",
+    "Vortioxetine",
 ]
 
 @app.route('/', methods=['GET', 'POST'])
