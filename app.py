@@ -30,16 +30,105 @@ MDD_DRUGS = [
     "Vortioxetine",
 ]
 
+GENE_ALIASES = {
+    "5-HT2A": "HTR2A",
+    "5HT2A": "HTR2A",
+    "SEROTONIN RECEPTOR 2A": "HTR2A",
+    "SEROTONIN TRANSPORTER": "SLC6A4",
+    "SERT": "SLC6A4",
+    "BRAIN-DERIVED NEUROTROPHIC FACTOR": "BDNF",
+    "TRYPTOPHAN HYDROXYLASE 2": "TPH2",
+    "DOPAMINE RECEPTOR D2": "DRD2",
+    "FK506 BINDING PROTEIN 5": "FKBP5",
+    "METHYLENETETRAHYDROFOLATE REDUCTASE": "MTHFR",
+    "G PROTEIN BETA 3": "GNB3",
+}
+
+DRUG_ALIASES = {
+    "PROZAC": "Fluoxetine",
+    "ZOLOFT": "Sertraline",
+    "CELEXA": "Citalopram",
+    "LEXAPRO": "Escitalopram",
+    "EFFEXOR": "Venlafaxine",
+    "SAVELLA": "Milnacipran",
+    "REMERON": "Mirtazapine",
+    "TRINTELLIX": "Vortioxetine",
+}
+
+#for parsing the gene results that way we can easily put it in table form
+def parseGeneResults(json_data):
+    rows = []
+    nodes = (json_data.get("data",{}).get('genes',{}) or {}).get('nodes',[]) or []
+    for n in nodes:
+        for it in n.get("interactions", []) or []:
+            drug = it.get("drug") or {}
+            types = ", ".join([t.get("type","") for t in (it.get("interactionTypes") or []) if t.get("type")]) or "—"
+            dirs  = ", ".join([t.get("directionality","") for t in (it.get("interactionTypes") or []) if t.get("directionality")]) or "—"
+            sources = ", ".join([s.get("sourceDbName","") for s in (it.get("sources") or []) if s.get("sourceDbName")]) or "—"
+            pmids = ", ".join([str(p.get("pmid")) for p in (it.get("publications") or []) if p.get("pmid")]) or "—"
+            rows.append({
+                "left_label": "Gene",
+                "left_name": n.get("name") or "",
+                "left_cid": n.get("conceptId") or "",
+                "right_label": "Drug",
+                "right_name": drug.get("name") or "",
+                "right_cid": drug.get("conceptId") or "",
+                "types": types, "directions": dirs, "score": it.get("interactionScore"),
+                "sources": sources, "pmids": pmids
+            })
+    return rows
+
+#for parsing the gene results that way we can easily put it in table form
+def parseDrugResults(json_data):
+    rows = []
+    nodes = (json_data.get("data", {}).get("drugs", {}) or {}).get("nodes", []) or []
+    for n in nodes:
+        for it in n.get("interactions", []) or []:
+            gene = it.get("gene") or {}
+            types = ", ".join([t.get("type","") for t in (it.get("interactionTypes") or []) if t.get("type")]) or "—"
+            dirs  = ", ".join([t.get("directionality","") for t in (it.get("interactionTypes") or []) if t.get("directionality")]) or "—"
+            sources = ", ".join([s.get("sourceDbName","") for s in (it.get("sources") or []) if s.get("sourceDbName")]) or "—"
+            pmids = ", ".join([str(p.get("pmid")) for p in (it.get("publications") or []) if p.get("pmid")]) or "—"
+            rows.append({
+                "left_label": "Drug",
+                "left_name": n.get("name") or "",
+                "left_cid": n.get("conceptId") or "",
+                "right_label": "Gene",
+                "right_name": gene.get("longName") or gene.get("name") or "",
+                "right_cid": gene.get("conceptId") or "",
+                "types": types, "directions": dirs, "score": it.get("interactionScore"),
+                "sources": sources, "pmids": pmids
+            })
+    return rows
+
+#this is for normalizing the user search so it works with dgidb, basically lets you search by brand, genes
+def normalize_term(search_type: str, s: str) -> str:
+    if not s:
+        return s
+    key = s.strip().upper()
+    if search_type == "gene":
+        return GENE_ALIASES.get(key, s.strip().upper())
+    else:
+        #maps the drug brands to the generic name
+        drug = DRUG_ALIASES.get(key)
+        return drug if drug else s.strip().title()
+    
+
+
 @app.route('/', methods=['GET', 'POST'])
 def index():
     results = None
     error = None
     mdd_list = None
 
+    rows = []
+    search_type = None
+    query_value = ""
+
     if request.method == 'POST':
         search_type = request.form.get('type')
         query_value = request.form.get('query', '').strip()
-
+        query_value = normalize_term(search_type, query_value)
         if not search_type:
             error = "Please select a type."
         else:
@@ -117,13 +206,20 @@ def index():
                 variables = {"names": [query_value]}
                 
                 try:
-                    response = requests.post(DGIDB_API_URL, json={"query": query, "variables": variables})
+                    response = requests.post(DGIDB_API_URL, json={"query": query, "variables": variables}, timeout=20)
+              
                     response.raise_for_status()
                     results = response.json()
+
+                    if not results.get("errors"):
+                        rows = parseGeneResults(results) if search_type == "gene" else parseDrugResults(results)
+                    else:
+                        error = results["errors"][0].get("message", "GraphQL error")
                 except requests.RequestException as e:
                     error = f"Failed to query DGIdb API: {str(e)}"
 
-    return render_template('index.html', results=results, error=error, mdd_list=mdd_list)
+    return render_template('index.html', results=results, error=error, mdd_list=mdd_list, search_type=search_type, 
+                           query=query_value,rows=rows)
 
 if __name__ == '__main__':
     app.run(debug=True)
