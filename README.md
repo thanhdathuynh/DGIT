@@ -10,8 +10,7 @@ While the DGIdb contains interactions for a wide range of conditions, **this too
 
 1. **Clone the repository**
     ```bash
-    git clone https://github.com/yourusername/dgidb-search.git
-    cd dgidb-search
+    git clone https://github.com/thanhdathuynh/DGIT.git
 
 2. **Install requirements**
     ```bash
