@@ -1,21 +1,11 @@
 from flask import Flask, request, render_template
 import requests
+from gene_mapping import GENE_MAPPING, map_to_symbol  # already in your code
 
 app = Flask(__name__)
 DGIDB_API_URL = "https://dgidb.org/api/graphql"
 
-MDD_GENES = [
-    "SLC6A4",
-    "BDNF",
-    "HTR2A",
-    "COMT",
-    "TPH2",
-    "MAOA",
-    "SLC6A3",
-    "NR3C1",
-    "CRHR1",
-    "FKBP5",
-]
+MDD_GENES = list(GENE_MAPPING.keys())
 
 MDD_DRUGS = [
     "Fluoxetine",
@@ -52,6 +42,15 @@ def index():
                 else:
                     error = "Invalid type selected."
             else:
+                # map aliases to canonical gene symbol before querying
+                if search_type == 'gene':
+                    mapped_symbol = map_to_symbol(query_value)
+                    if mapped_symbol:
+                        query_value = mapped_symbol
+                    else:
+                        error = f"No matching gene found for '{query_value}'."
+                        return render_template('index.html', results=None, error=error, mdd_list=None)
+
                 # Query DGIdb API if input is not empty
                 if search_type == 'gene': #search interaction by gene
                     query = """
@@ -83,7 +82,7 @@ def index():
                       }
                     }
                     """
-                else:  # search interaction by gene
+                else:  # search interaction by drug
                     query = """
                     query($names: [String!]!) {
                       drugs(names: $names) {
