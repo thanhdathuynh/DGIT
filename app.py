@@ -1,6 +1,6 @@
 from flask import Flask, request, render_template
 import requests
-from gene_mapping import GENE_MAPPING, map_to_symbol  # already in your code
+from gene_mapping import GENE_MAPPING, map_to_symbol 
 
 app = Flask(__name__)
 DGIDB_API_URL = "https://dgidb.org/api/graphql"
@@ -11,13 +11,13 @@ MDD_DRUGS = [
     "Fluoxetine",
     "Sertraline",
     "Venlafaxine",
-    "Paroxetine",
+    "Levomilnacipran",
     "Citalopram",
     "Escitalopram",
-    "Duloxetine",
-    "Bupropion",
+    "Milnacipran",
+    "Trazodone",
     "Mirtazapine",
-    "Amitriptyline",
+    "Vortioxetine",
 ]
 
 @app.route('/', methods=['GET', 'POST'])
