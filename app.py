@@ -3,6 +3,8 @@ import requests
 
 app = Flask(__name__)
 DGIDB_API_URL = "https://dgidb.org/api/graphql"
+#API for genome info (maybe ucsc genome browser)
+#API for protein info (maybe ncbi)
 
 MDD_GENES = [
     "SLC6A4",
@@ -15,6 +17,19 @@ MDD_GENES = [
     "CELF4",
     "LAMB2",
     "FKBP5"
+]
+
+MDD_PROTEINS = [
+    "BDNF",
+    "IL-6",
+    "CRP",
+    "TNF‑α",
+    "ITIH4",
+    "CD155",
+    "Lipocalin-2",
+    "HGF",
+    "LIGHT",
+    "C1QC",
 ]
 
 MDD_DRUGS = [
@@ -53,6 +68,7 @@ DRUG_ALIASES = {
     "SAVELLA": "Milnacipran",
     "REMERON": "Mirtazapine",
     "TRINTELLIX": "Vortioxetine",
+    #we can add more brands if anything
 }
 
 #for parsing the gene results that way we can easily put it in table form
@@ -77,6 +93,11 @@ def parseGeneResults(json_data):
                 "sources": sources, "pmids": pmids
             })
     return rows
+
+def parseProteinResults(json_data):
+  rows = []
+  nodes = (json_data.get("data",{}).get('genes',{}) or {}).get('nodes',[]) or []
+    
 
 #for parsing the gene results that way we can easily put it in table form
 def parseDrugResults(json_data):
@@ -108,6 +129,10 @@ def normalize_term(search_type: str, s: str) -> str:
     key = s.strip().upper()
     if search_type == "gene":
         return GENE_ALIASES.get(key, s.strip().upper())
+    elif search_type == "protein": 
+        protein = PROTEIN_ALIASES.get(key)
+        return protein if protein else s.strip().title()
+    
     else:
         #maps the drug brands to the generic name
         drug = DRUG_ALIASES.get(key)
@@ -136,6 +161,9 @@ def index():
                 # Show full MDD list if query empty
                 if search_type == 'gene':
                     mdd_list = MDD_GENES
+                  
+                elif search_type == "protein":
+                    mdd_list = MDD_PROTEINS
                 elif search_type == 'drug':
                     mdd_list = MDD_DRUGS
                 else:
