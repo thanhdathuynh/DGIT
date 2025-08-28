@@ -71,6 +71,16 @@ DRUG_ALIASES = {
     #we can add more brands if anything
 }
 
+PROTEIN_ALIASES = {
+    "IL-6": "IL6", "IL6": "IL6", "CRP": "CRP",
+    "TNF": "TNF", "TNF-ALPHA": "TNF", "TNF-ΑLPHA": "TNF",  
+    "TNF-α": "TNF","TNF-Α": "TNF", "TNF-α": "TNF",       
+    "ITIH4": "ITIH4", "CD155": "PVR","LIPOCALIN-2": "LCN2",
+    "LIPOCALIN 2": "LCN2","HGF": "HGF","LIGHT": "TNFSF14",
+    "C1QC": "C1QC","BDNF": "BDNF",
+}
+
+
 #for parsing the gene results that way we can easily put it in table form
 def parseGeneResults(json_data):
     rows = []
@@ -95,9 +105,40 @@ def parseGeneResults(json_data):
     return rows
 
 def parseProteinResults(json_data):
-  rows = []
-  nodes = (json_data.get("data",{}).get('genes',{}) or {}).get('nodes',[]) or []
-    
+    rows = []
+    if not json_data:
+        return rows
+    for hit in json_data.get("results", []):
+        protein_name = None
+        description = None
+        #protein description
+        if hit.get("proteinDescription", {}).get("recommendedName", {}).get("fullName", {}):
+            description = hit["proteinDescription"]["recommendedName"]["fullName"].get("value")
+        #protein name
+        if hit.get("proteinDescription", {}).get("recommendedName", {}).get("shortNames"):
+            sn = hit["proteinDescription"]["recommendedName"]["shortNames"]
+            if sn and isinstance(sn, list) and sn[0].get("value"):
+                protein_name = sn[0]["value"]
+
+        uniprot_id = hit.get("primaryAccession")
+        organism = hit.get("organism", {}).get("scientificName")
+
+        gene_symbols = []
+        for g in hit.get("genes", []):
+            if g.get("geneName", {}).get("value"):
+                gene_symbols.append(g["geneName"]["value"])
+            for syn in g.get("synonyms", []):
+                if syn.get("value"):
+                    gene_symbols.append(syn["value"])
+
+        rows.append({
+            "protein_name": protein_name,
+            "description": description,
+            "uniprot_id": uniprot_id,
+            "organism": organism,
+            "genes": ", ".join(gene_symbols) if gene_symbols else "—"
+        })
+    return rows
 
 #for parsing the gene results that way we can easily put it in table form
 def parseDrugResults(json_data):
@@ -130,14 +171,38 @@ def normalize_term(search_type: str, s: str) -> str:
     if search_type == "gene":
         return GENE_ALIASES.get(key, s.strip().upper())
     elif search_type == "protein": 
-        protein = PROTEIN_ALIASES.get(key)
-        return protein if protein else s.strip().title()
-    
+        return PROTEIN_ALIASES.get(key, key)
+        
     else:
         #maps the drug brands to the generic name
         drug = DRUG_ALIASES.get(key)
         return drug if drug else s.strip().title()
     
+def fetchProteinResults(protein_name: str):
+    url = "https://rest.uniprot.org/uniprotkb/search"
+    params = {
+        "query": f"({protein_name}) AND organism_id:9606",  # 9606 = human
+        # 'genes' is NOT a valid field name; use these instead:
+        "fields": "accession,protein_name,gene_primary,gene_names,organism_name",
+        "format": "json",
+        "size": 5
+    }
+    headers = {
+        "User-Agent": "DGIT/0.1 (contact@example.com)",
+        "Accept": "application/json"
+    }
+    resp = None
+    try:
+        resp = requests.get(url, params=params, headers=headers, timeout=10)
+        print("UniProt URL:", resp.url)
+        resp.raise_for_status()
+        return resp.json(), None
+    except requests.HTTPError as e:
+        status = resp.status_code if resp is not None else "unknown"
+        body_snip = (resp.text or "")[:300] if resp is not None else ""
+        return None, f"UniProt HTTP error {status} at {(resp.url if resp else url)}: {e}. Body: {body_snip}"
+    except requests.RequestException as e:
+        return None, f"UniProt request failed: {e}"
 
 
 @app.route('/', methods=['GET', 'POST'])
@@ -200,6 +265,30 @@ def index():
                       }
                     }
                     """
+
+                    variables = {"names": [query_value]}
+                    try:
+                        response = requests.post(DGIDB_API_URL, json={"query": query, "variables": variables}, timeout=20)
+                        response.raise_for_status()
+                        results = response.json()
+                        if not results.get("errors"):
+                            rows = parseGeneResults(results)
+                        else:
+                            error = results["errors"][0].get("message", "GraphQL error")
+                    except requests.RequestException as e:
+                        error = f"Failed to query DGIdb API: {e}"
+
+                elif search_type == 'protein':
+                  try:
+                      protein_json, uni_err = fetchProteinResults(query_value)
+                      if uni_err:
+                          error = uni_err
+                      else:
+                          results = protein_json
+                          rows = parseProteinResults(protein_json)
+                  except Exception as e:
+                      error = f"Failed to query UniProt: {e}"
+
                 else:  # search interaction by gene
                     query = """
                     query($names: [String!]!) {
@@ -231,20 +320,19 @@ def index():
                       }
                     }
                     """
-                variables = {"names": [query_value]}
+                    variables = {"names": [query_value]}
                 
-                try:
-                    response = requests.post(DGIDB_API_URL, json={"query": query, "variables": variables}, timeout=20)
-              
-                    response.raise_for_status()
-                    results = response.json()
+                    try:
+                        response = requests.post(DGIDB_API_URL, json={"query": query, "variables": variables}, timeout=20)
+                        response.raise_for_status()
+                        results = response.json()
 
-                    if not results.get("errors"):
-                        rows = parseGeneResults(results) if search_type == "gene" else parseDrugResults(results)
-                    else:
-                        error = results["errors"][0].get("message", "GraphQL error")
-                except requests.RequestException as e:
-                    error = f"Failed to query DGIdb API: {str(e)}"
+                        if not results.get("errors"):
+                            rows = parseGeneResults(results) if search_type == "gene" else parseDrugResults(results)
+                        else:
+                            error = results["errors"][0].get("message", "GraphQL error")
+                    except requests.RequestException as e:
+                        error = f"Failed to query DGIdb API: {str(e)}"
 
     return render_template('index.html', results=results, error=error, mdd_list=mdd_list, search_type=search_type, 
                            query=query_value,rows=rows)
