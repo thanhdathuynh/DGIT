@@ -4,7 +4,6 @@ import requests
 app = Flask(__name__)
 DGIDB_API_URL = "https://dgidb.org/api/graphql"
 #API for genome info (maybe ucsc genome browser)
-#API for protein info (maybe ncbi)
 
 MDD_GENES = [
     "SLC6A4",
@@ -188,7 +187,7 @@ def fetchProteinResults(protein_name: str):
         "size": 5
     }
     headers = {
-        "User-Agent": "DGIT/0.1 (contact@example.com)",
+        "User-Agent": "DGIT",
         "Accept": "application/json"
     }
     resp = None
