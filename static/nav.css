@@ -1,0 +1,27 @@
+nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+}
+
+nav a.title {
+    font-family: "Caprasimo", serif;
+    font-weight: 400;
+    font-style: normal;
+
+    font-size: 35px; 
+    text-decoration: none; 
+    color: #8b0000;
+}
+
+nav a.menu {
+    margin-left: 25px; 
+    text-decoration: none; 
+    color: black;
+
+    font-family: "DM Sans", sans-serif;
+    font-optical-sizing: auto;
+    font-weight: 700;
+    font-style: normal;
+}
