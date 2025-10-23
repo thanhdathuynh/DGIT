@@ -111,9 +111,56 @@
                     {% endfor %}
                 </tbody>
             </table>
+
+            <h2 style="margin-top:1.5rem;">Interaction Strength (Strength of Evidence of Interaction)</h2>
+            
+            <!--this is for the visualization of the interaction scores-->
+            <div id="scroll-container"
+                style="width:100%; overflow-x:auto; border:1px solid #ddd; padding:10px;">
+                <canvas id="scoreChart" height="400"></canvas>
+            </div>
+
+            <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+            <script>
+                const scoreData = JSON.parse('{{ rows | tojson | safe }}');
+                const labels = scoreData.map(r => r.right_name || r.left_name);
+                const scores = scoreData.map(r => r.score || 0);
+
+                const canvas = document.getElementById('scoreChart');
+                const widthPerBar = 100;  //adjust spacing
+                canvas.width = Math.max(800, labels.length * widthPerBar);
+
+                const ctx = canvas.getContext('2d');
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Interaction Score (0–10)',
+                        data: scores,
+                        backgroundColor: scores.map(s =>
+                        s > 8 ? '#4caf50' : s > 5 ? '#ffb300' : '#e57373'
+                        )
+                    }]
+                    },
+                    options: {
+                    responsive: false,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true, max: 10 },
+                        x: { ticks: { autoSkip: false, font: { size: 10 } } }
+                    }
+                    }
+                });
+            </script>
+
+
+
+
             {% elif (search_type or request.form.get('type')) and not mdd_list %}
                 <p>No results.</p>
             {% endif %}
+
             <details style="margin-top:1rem;">
                 <summary>Raw Response (debug)</summary>
                 <pre>{{ results | tojson(indent=2) }}</pre>

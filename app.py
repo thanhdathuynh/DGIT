@@ -333,8 +333,13 @@ def index():
                     except requests.RequestException as e:
                         error = f"Failed to query DGIdb API: {str(e)}"
 
-    return render_template('index.html', results=results, error=error, mdd_list=mdd_list, search_type=search_type, 
-                           query=query_value,rows=rows)
+    return render_template('index.html',
+                       results=results,
+                       rows=rows,
+                       search_type=search_type,
+                       mdd_list=mdd_list,
+                       error=error)
+
 
 @app.route('/nav', methods=['GET'])
 def nav():
