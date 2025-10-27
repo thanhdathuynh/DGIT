@@ -1,5 +1,7 @@
-from flask import Flask, request, render_template
+from flask import Flask, jsonify, request, render_template
 import requests
+from ai_helper import ask_ai_google
+import re
 
 app = Flask(__name__)
 DGIDB_API_URL = "https://dgidb.org/api/graphql"
@@ -202,6 +204,10 @@ def fetchProteinResults(protein_name: str):
     except requests.RequestException as e:
         return None, f"UniProt request failed: {e}"
 
+def extract_gene_from_question(question):
+    #Simple regex to find uppercase gene names (e.g., SLC6A4, BDNF)
+    matches = re.findall(r'\b[A-Z0-9]{2,10}\b', question)
+    return matches[0] if matches else None
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
@@ -345,6 +351,43 @@ def nav():
   if request.method == 'GET':
       return render_template('nav.html')
   return render_template('nav.html')
+
+@app.route("/ask", methods=["POST"])
+def ask():
+    data = request.get_json()
+    question = data.get("question")
+
+    # Optional gene context
+    gene_name = extract_gene_from_question(question)
+    interactions = None
+    if gene_name:
+        query = """
+        query($names: [String!]!) {
+          genes(names: $names) {
+            nodes {
+              interactions {
+                drug { name conceptId }
+                interactionScore
+                interactionTypes { type directionality }
+                publications { pmid }
+                sources { sourceDbName }
+              }
+            }
+          }
+        }
+        """
+        variables = {"names": [gene_name]}
+        try:
+            resp = requests.post("https://dgidb.org/api/graphql", json={"query": query, "variables": variables}, timeout=20)
+            resp.raise_for_status()
+            results = resp.json()
+            if not results.get("errors"):
+                interactions = parseGeneResults(results)[:5]
+        except:
+            interactions = None
+
+    answer = ask_ai_google(question, interactions)
+    return jsonify({"answer": answer})
 
 if __name__ == '__main__':
     app.run(debug=True)

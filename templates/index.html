@@ -166,5 +166,67 @@
                 <pre>{{ results | tojson(indent=2) }}</pre>
             </details>
         {% endif %}
+
+        <!-- Barebones: AI Chatbot Toggle Button -->
+<button id="aiToggleBtn">💬</button>
+
+<!-- Floating AI Chat Panel -->
+<div id="aiPanel">
+    <div id="aiPanelHeader">AI Assistant</div>
+    <div id="aiPanelBody"></div>
+    <div id="aiInputContainer">
+        <input type="text" id="aiInput" placeholder="Ask something...">
+        <button id="aiSend">Send</button>
+    </div>
+</div>
+
+<script>
+    // Toggle AI panel visibility
+    const aiToggleBtn = document.getElementById('aiToggleBtn');
+    const aiPanel = document.getElementById('aiPanel');
+    aiToggleBtn.addEventListener('click', () => {
+        aiPanel.style.display = aiPanel.style.display === 'flex' ? 'none' : 'flex';
+        aiPanel.style.flexDirection = 'column';
+    });
+
+    const aiInput = document.getElementById('aiInput');
+    const aiSend = document.getElementById('aiSend');
+    const aiBody = document.getElementById('aiPanelBody');
+
+    // Append message to panel
+    function appendMessage(text, sender='user') {
+        const p = document.createElement('p');
+        p.textContent = text;
+        p.style.margin = '5px 0';
+        p.style.fontWeight = sender === 'user' ? 'bold' : 'normal';
+        aiBody.appendChild(p);
+        aiBody.scrollTop = aiBody.scrollHeight;
+    }
+
+    // Send question to backend
+    async function sendQuestion() {
+        const question = aiInput.value.trim();
+        if(!question) return;
+        appendMessage("You: " + question, 'user');
+        aiInput.value = '';
+
+        try {
+            const response = await fetch('/ask', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ question })
+            });
+            const data = await response.json();
+            appendMessage("DGIT AI Assistant: " + data.answer, 'ai');
+        } catch (err) {
+            appendMessage("DGIT AI Assistant: Error contacting server.", 'ai');
+        }
+    }
+
+    aiSend.addEventListener('click', sendQuestion);
+    aiInput.addEventListener('keypress', (e) => {
+        if(e.key === 'Enter') sendQuestion();
+    });
+</script>
 </body>
 </html>
