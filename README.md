@@ -9,14 +9,26 @@ While the DGIdb contains interactions for a wide range of conditions, **this too
 ## Installation
 
 1. **Clone the repository**
-    ```bash
-    git clone https://github.com/thanhdathuynh/DGIT.git
+
+   ```bash
+   git clone https://github.com/thanhdathuynh/DGIT.git
+
+   ```
 
 2. **Install requirements**
-    ```bash
-    pip install -r requirements.txt
+
+   ```bash
+   pip install -r requirements.txt
+
+   ```
+
+3. **Run application**
+   ```bash
+   pip app.py
+   ```
 
 ## References
+
 The relevance of gene-drug interactions in MDD is supported by the following literature:
 
 Overview of the Genetics of Major Depression Disorder: Discusses genetic markers associated with antidepressant efficacy. (https://pmc.ncbi.nlm.nih.gov/articles/PMC3077049/)
