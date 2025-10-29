@@ -180,8 +180,7 @@ def normalize_term(search_type: str, s: str) -> str:
 def fetchProteinResults(protein_name: str):
     url = "https://rest.uniprot.org/uniprotkb/search"
     params = {
-        "query": f"({protein_name}) AND organism_id:9606",  # 9606 = human
-        # 'genes' is NOT a valid field name; use these instead:
+        "query": f"({protein_name}) AND organism_id:9606", 
         "fields": "accession,protein_name,gene_primary,gene_names,organism_name",
         "format": "json",
         "size": 5
