@@ -208,9 +208,16 @@ def extract_gene_from_question(question):
     #Simple regex to find uppercase gene names (e.g., SLC6A4, BDNF)
     matches = re.findall(r'\b[A-Z0-9]{2,10}\b', question)
     return matches[0] if matches else None
-
-@app.route('/', methods=['GET', 'POST'])
+#landing page of DGIT
+@app.route('/', methods=['GET'])
 def index():
+  if request.method == 'GET':
+      return render_template('index.html')
+  return render_template('index.html')
+
+
+@app.route('/search', methods=['GET', 'POST'])
+def search():
     results = None
     error = None
     mdd_list = None
@@ -338,13 +345,8 @@ def index():
                     except requests.RequestException as e:
                         error = f"Failed to query DGIdb API: {str(e)}"
 
-    return render_template('index.html',
-                       results=results,
-                       rows=rows,
-                       search_type=search_type,
-                       mdd_list=mdd_list,
-                       error=error)
-
+    return render_template('search.html', results=results, error=error, mdd_list=mdd_list, search_type=search_type, 
+                           query=query_value,rows=rows)
 
 @app.route('/nav', methods=['GET'])
 def nav():
