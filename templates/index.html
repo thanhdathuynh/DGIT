@@ -25,38 +25,48 @@
     <p>This is a placeholder for the homepage content.</p>
     <a href="/search">Go to Search Page</a>
 
-        <!-- Barebones: AI Chatbot Toggle Button -->
-<button id="aiToggleBtn">💬</button>
+<!-- AI Chatbot Toggle Button -->
+<button id="aiToggleBtn" style="position:fixed;bottom:20px;right:20px;z-index:1000;padding:10px 15px;border-radius:50%;background:#4caf50;color:white;border:none;font-size:18px;cursor:pointer;">💬</button>
 
 <!-- Floating AI Chat Panel -->
-<div id="aiPanel">
-    <div id="aiPanelHeader">AI Assistant</div>
-    <div id="aiPanelBody"></div>
-    <div id="aiInputContainer">
-        <input type="text" id="aiInput" placeholder="Ask something...">
-        <button id="aiSend">Send</button>
+<div id="aiPanel" style="display:none;position:fixed;bottom:70px;right:20px;width:300px;height:400px;background:white;border:1px solid #ccc;border-radius:10px;box-shadow:0 4px 8px rgba(0,0,0,0.2);z-index:1000;flex-direction:column;overflow:hidden;">
+    <div id="aiPanelHeader" style="background:#4caf50;color:white;padding:10px;font-weight:bold;border-top-left-radius:10px;border-top-right-radius:10px;">AI Assistant</div>
+    <div id="aiPanelBody" style="flex:1;padding:10px;overflow-y:auto;background:#f9f9f9;"></div>
+    <div id="aiInputContainer" style="display:flex;border-top:1px solid #ccc;">
+        <input type="text" id="aiInput" placeholder="Ask something..." style="flex:1;padding:8px;border:none;border-radius:0 0 0 10px;">
+        <button id="aiSend" style="padding:8px 12px;border:none;background:#4caf50;color:white;cursor:pointer;border-radius:0 0 10px 0;">Send</button>
     </div>
 </div>
 
+<!-- Include Markdown parser -->
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
 <script>
-    // Toggle AI panel visibility
     const aiToggleBtn = document.getElementById('aiToggleBtn');
     const aiPanel = document.getElementById('aiPanel');
+    const aiInput = document.getElementById('aiInput');
+    const aiSend = document.getElementById('aiSend');
+    const aiBody = document.getElementById('aiPanelBody');
+
+    // Toggle AI panel visibility
     aiToggleBtn.addEventListener('click', () => {
         aiPanel.style.display = aiPanel.style.display === 'flex' ? 'none' : 'flex';
         aiPanel.style.flexDirection = 'column';
     });
 
-    const aiInput = document.getElementById('aiInput');
-    const aiSend = document.getElementById('aiSend');
-    const aiBody = document.getElementById('aiPanelBody');
-
-    // Append message to panel
+    // Append message to chat panel
     function appendMessage(text, sender='user') {
         const p = document.createElement('p');
-        p.textContent = text;
         p.style.margin = '5px 0';
-        p.style.fontWeight = sender === 'user' ? 'bold' : 'normal';
+        if(sender === 'ai'){
+            // Render Markdown for AI messages
+            p.innerHTML = marked.parse(text);
+            p.style.color = '#000';
+        } else {
+            p.textContent = text;
+            p.style.fontWeight = 'bold';
+            p.style.color = '#333';
+        }
         aiBody.appendChild(p);
         aiBody.scrollTop = aiBody.scrollHeight;
     }

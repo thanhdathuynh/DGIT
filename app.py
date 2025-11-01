@@ -208,13 +208,33 @@ def extract_gene_from_question(question):
     #Simple regex to find uppercase gene names (e.g., SLC6A4, BDNF)
     matches = re.findall(r'\b[A-Z0-9]{2,10}\b', question)
     return matches[0] if matches else None
+
+def fetch_ncbi_summary(term):
+    try:
+        url = f"https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi"
+        params = {"db": "gene", "term": term, "retmode": "json"}
+        r = requests.get(url, params=params, timeout=10)
+        r.raise_for_status()
+        ids = r.json().get("esearchresult", {}).get("idlist", [])
+        if not ids:
+            return None
+        gene_id = ids[0]
+
+        summary_url = f"https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi"
+        summary_params = {"db": "gene", "id": gene_id, "retmode": "json"}
+        s = requests.get(summary_url, params=summary_params, timeout=10)
+        s.raise_for_status()
+        doc = s.json().get("result", {}).get(gene_id, {})
+        return doc.get("description")
+    except Exception:
+        return None
+
 #landing page of DGIT
 @app.route('/', methods=['GET'])
 def index():
   if request.method == 'GET':
       return render_template('index.html')
   return render_template('index.html')
-
 
 @app.route('/search', methods=['GET', 'POST'])
 def search():
@@ -359,19 +379,20 @@ def ask():
     data = request.get_json()
     question = data.get("question")
 
-    # Optional gene context
     gene_name = extract_gene_from_question(question)
     interactions = None
+    ncbi_summary = None
+
     if gene_name:
         query = """
         query($names: [String!]!) {
           genes(names: $names) {
             nodes {
+              name
               interactions {
                 drug { name conceptId }
                 interactionScore
                 interactionTypes { type directionality }
-                publications { pmid }
                 sources { sourceDbName }
               }
             }
@@ -380,7 +401,7 @@ def ask():
         """
         variables = {"names": [gene_name]}
         try:
-            resp = requests.post("https://dgidb.org/api/graphql", json={"query": query, "variables": variables}, timeout=20)
+            resp = requests.post(DGIDB_API_URL, json={"query": query, "variables": variables}, timeout=15)
             resp.raise_for_status()
             results = resp.json()
             if not results.get("errors"):
@@ -388,7 +409,9 @@ def ask():
         except:
             interactions = None
 
-    answer = ask_ai_google(question, interactions)
+        ncbi_summary = fetch_ncbi_summary(gene_name)
+
+    answer = ask_ai_google(question, interactions, ncbi_summary)
     return jsonify({"answer": answer})
 
 if __name__ == '__main__':
