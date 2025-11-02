@@ -24,7 +24,7 @@ While the DGIdb contains interactions for a wide range of conditions, **this too
 
 3. **Run application**
    ```bash
-   pip app.py
+   python app.py
    ```
 
 ## References

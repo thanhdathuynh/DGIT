@@ -368,11 +368,11 @@ def search():
     return render_template('search.html', results=results, error=error, mdd_list=mdd_list, search_type=search_type, 
                            query=query_value,rows=rows)
 
-@app.route('/nav', methods=['GET'])
+@app.route('/about', methods=['GET'])
 def nav():
   if request.method == 'GET':
-      return render_template('nav.html')
-  return render_template('nav.html')
+      return render_template('about.html')
+  return render_template('about.html')
 
 @app.route("/ask", methods=["POST"])
 def ask():
