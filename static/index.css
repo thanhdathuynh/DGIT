@@ -1,7 +1,5 @@
 body {
     background-color: beige;
-    width: 100vw;
-    margin: 0;
 }
 
 .title-container {
@@ -14,8 +12,9 @@ body {
 .first, .second {
     display: flex;
     justify-content: center;
-    font-size: 50px;
-    align-items: center;
+    font-size: 60px;
+    align-items: baseline;
+    height: 120px;
 }
 
 .first h1, .second h1 {
@@ -26,4 +25,17 @@ body {
     font-size: 100px; 
     text-decoration: none; 
     color: #8b0000;
+}
+
+.first p, .second p {
+    font-family: "DM Sans", sans-serif;
+    font-optical-sizing: auto;
+    font-weight: 700;
+    font-style: normal;
+    font-size: 70px;
+    margin: 0;
+    color: black;
+
+    margin-right: 20px;
+    margin-left: 5px;
 }

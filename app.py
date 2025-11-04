@@ -369,10 +369,16 @@ def search():
                            query=query_value,rows=rows)
 
 @app.route('/about', methods=['GET'])
-def nav():
+def about():
   if request.method == 'GET':
       return render_template('about.html')
   return render_template('about.html')
+
+@app.route('/db', methods=['GET'])
+def database():
+  if request.method == 'GET':
+      return render_template('db.html')
+  return render_template('db.html')
 
 @app.route("/ask", methods=["POST"])
 def ask():
