@@ -8,6 +8,19 @@
         select, input, button { font-size: 16px; margin: 5px 0; }
         pre { background: #f4f4f4; padding: 10px; }
         .error { color: red; }
+        .clickable-drug {
+            cursor: pointer; color: #0077ff; text-decoration: underline; }
+        .clickable-drug:hover {color: #084db3;}
+        .clickable-protein {
+            cursor: pointer;
+            color: #0077ff;
+            text-decoration: underline;
+        }
+        .clickable-protein:hover {
+            color: #084db3;
+        }
+
+
     </style>
 
     <!--For navbar-->
@@ -90,10 +103,17 @@
                 {% for r in rows %}
                 <tr>
                     <td>{{ r.protein_name or "—" }}</td>
-                    <td>{{ r.description or "—" }}</td>
+                    <td><span class="clickable-protein">{{ r.description or "—" }}</span></td>
                     <td>{{ r.uniprot_id or "—" }}</td>
                     <td>{{ r.organism or "—" }}</td>
-                    <td>{{ r.genes }}</td>
+                    <td>
+                        {% if r.genes %}
+                            {% for g in r.genes.split(',') %}
+                                <span class="clickable-protein">{{ g }}</span><br>
+                            {% endfor %}
+                        {% else %} — {% endif %}
+                    </td>
+
                 </tr>
                 {% endfor %}
                 </tbody>
@@ -119,7 +139,7 @@
                     {% for r in rows %}
                         <tr>
                         <td><strong>{{ r.left_name or '—' }}</strong><br><small style="color:#666">{{ r.left_cid or '' }}</small></td>
-                        <td><strong>{{ r.right_name or '—' }}</strong><br><small style="color:#666">{{ r.right_cid or '' }}</small></td>
+                        <td><strong class = "clickable-drug">{{ r.right_name or '—' }}</strong><br><small style="color:#666">{{ r.right_cid or '' }}</small></td>
                         <td>{{ r.types }}</td>
                         <td>{{ r.directions }}</td>
                         <td>{{ r.score if r.score is not none else '—' }}</td>
@@ -167,6 +187,29 @@
                         }]
                     },
                     options: {
+                        onClick: (event, elements) => {
+                            if (elements.length > 0) {
+                                const index = elements[0].index;
+                                const clickedName = labels[index];
+                                aiPanel.style.display = 'flex';
+                                appendMessage("You selected: " + clickedName, 'user');
+
+                                fetch('/details', {
+                                    method: 'POST',
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({ query: clickedName })
+                                })
+                                .then(res => res.json())
+                                .then(data => {
+                                    appendMessage("DGIT AI Assistant: " + data.answer, 'ai');
+                                    aiPanel.style.display = 'flex'; // auto-open chat
+                                    aiPanel.style.flexDirection = 'column';
+                                })
+                                .catch(err => {
+                                    appendMessage("DGIT AI Assistant: Error contacting server.", 'ai');
+                                });
+                            }
+                        },
                         responsive: false,
                         maintainAspectRatio: false,
                         scales: {
@@ -174,11 +217,9 @@
                             x: { ticks: { autoSkip: false, font: { size: 10 } } }
                         }
                     }
+
                 });
             </script>
-
-
-
 
 
             {% elif (search_type or request.form.get('type')) and not mdd_list %}
@@ -260,6 +301,57 @@
     aiInput.addEventListener('keypress', (e) => {
         if(e.key === 'Enter') sendQuestion();
     });
+
+    //Make table drug/gene names clickable
+    document.querySelectorAll(".clickable-drug").forEach(el => {
+        el.addEventListener("click", () => {
+            const name = el.textContent.trim();
+            aiPanel.style.display = 'flex';
+            appendMessage("You selected: " + name, 'user');
+
+            fetch('/details', {
+                method: 'POST',
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ query: name })
+            })
+            .then(res => res.json())
+            .then(data => {
+                appendMessage("DGIT AI Assistant: " + data.answer, 'ai');
+
+                // Auto-open chat panel
+                aiPanel.style.display = 'flex';
+                aiPanel.style.flexDirection = 'column';
+            })
+            .catch(err => {
+                appendMessage("DGIT AI Assistant: Error contacting server.", 'ai');
+            });
+        });
+    });
+
+    //Protein click → AI query
+    document.querySelectorAll(".clickable-protein").forEach(el => {
+        el.addEventListener("click", () => {
+            const name = el.textContent.trim();
+            aiPanel.style.display = 'flex';
+            appendMessage("You selected: " + name, 'user');
+
+            fetch('/details', {
+                method: 'POST',
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ query: name })
+            })
+            .then(res => res.json())
+            .then(data => {
+                appendMessage("DGIT AI Assistant: " + data.answer, 'ai');
+                aiPanel.style.display = 'flex';
+                aiPanel.style.flexDirection = 'column';
+            })
+            .catch(err => {
+                appendMessage("DGIT AI Assistant: Error contacting server.", 'ai');
+            });
+        });
+    });
+
 </script>
 </body>
 </html>

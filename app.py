@@ -414,5 +414,18 @@ def ask():
     answer = ask_ai_google(question, interactions, ncbi_summary)
     return jsonify({"answer": answer})
 
+@app.post('/details')
+def ask_ai_route():
+    from ai_helper import ask_ai_google
+    data = request.get_json()
+    query = data.get('query')
+
+    if not query:
+        return jsonify({"answer": "No query provided"}), 400
+
+    answer = ask_ai_google(query)
+    return jsonify({"answer": answer})
+
+
 if __name__ == '__main__':
     app.run(debug=True)
