@@ -374,6 +374,10 @@ def nav():
       return render_template('nav.html')
   return render_template('nav.html')
 
+@app.route('/about', methods=['GET'])
+def about():
+    return render_template('about.html')
+
 @app.route("/ask", methods=["POST"])
 def ask():
     data = request.get_json()

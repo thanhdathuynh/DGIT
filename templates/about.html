@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>About DGIT</title>
+    
+    <link rel="stylesheet" type="text/css" href="../static/nav.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Caprasimo&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background-color: #f5e6e8;
+            min-height: 100vh;
+        }
+        
+        .page-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        
+        .page-title {
+            text-align: center;
+            font-size: 3rem;
+            font-weight: bold;
+            margin-bottom: 60px;
+            color: #333;
+        }
+        
+        .content-box {
+            background: white;
+            border-radius: 20px;
+            padding: 50px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .section {
+            margin-bottom: 50px;
+        }
+        
+        .section:last-child {
+            margin-bottom: 0;
+        }
+        
+        .section-title {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        
+        .subsection {
+            margin-bottom: 25px;
+        }
+        
+        .subsection-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #444;
+        }
+        
+        .subsection-content {
+            font-size: 1rem;
+            line-height: 1.6;
+            color: #555;
+            margin-left: 20px;
+        }
+        
+        .bullet-item {
+            margin-bottom: 8px;
+            padding-left: 10px;
+        }
+        
+        .bullet-item::before {
+            content: "• ";
+            color: #c74a4a;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav>
+        <a href="/" class="title">DGIT</a>
+        <div class="menu container">
+            <a href="/search" class="menu">Search</a>
+            <a href="/about" class="menu">About</a>
+            <a href="/db" class="menu">Database</a>
+            <a href="/contact" class="menu">Contact</a>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="page-container">
+        <h1 class="page-title">ABOUT</h1>
+        
+        <div class="content-box">
+            <!-- User Instructions Section -->
+            <div class="section">
+                <h2 class="section-title">User Instructions</h2>
+                
+                <div class="subsection">
+                    <h3 class="subsection-title">1. Performing a Search</h3>
+                    <div class="subsection-content">
+                        <div class="bullet-item">Navigate to the Search page.</div>
+                        <div class="bullet-item">Enter a gene name, drug name, or protein in the search box.</div>
+                        <div class="bullet-item">Select the type (Gene, Drug, or Protein) from the dropdown menu.</div>
+                        <div class="bullet-item">Click Search to view interactions and related information.</div>
+                    </div>
+                </div>
+                
+                <div class="subsection">
+                    <h3 class="subsection-title">2. Using the AI Assistant</h3>
+                    <div class="subsection-content">
+                        <div class="bullet-item">Click the chat icon in the bottom right corner to open the AI Assistant.</div>
+                        <div class="bullet-item">Type your question about genes, drugs, or proteins.</div>
+                        <div class="bullet-item">The AI will provide detailed information and context.</div>
+                    </div>
+                </div>
+                
+                <div class="subsection">
+                    <h3 class="subsection-title">3. Viewing Interaction Details</h3>
+                    <div class="subsection-content">
+                        <div class="bullet-item">Click on any drug or protein name in the results table.</div>
+                        <div class="bullet-item">The AI Assistant will automatically open with detailed information.</div>
+                        <div class="bullet-item">Review interaction scores in the visualization chart.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Key Terms Section -->
+            <div class="section">
+                <h2 class="section-title">Key Terms</h2>
+                
+                <div class="subsection">
+                    <h3 class="subsection-title">1. Gene</h3>
+                    <div class="subsection-content">
+                        A segment of DNA that carries instructions for making proteins or functional RNA, influencing traits and how the body responds to drugs.
+                    </div>
+                </div>
+                
+                <div class="subsection">
+                    <h3 class="subsection-title">2. Protein</h3>
+                    <div class="subsection-content">
+                        A molecule made of amino acids that performs essential functions in the body, such as building structures, enabling chemical reactions, and regulating processes.
+                    </div>
+                </div>
+                
+                <div class="subsection">
+                    <h3 class="subsection-title">3. Drug-Gene Interaction</h3>
+                    <div class="subsection-content">
+                        The relationship between a pharmaceutical compound and a specific gene, which can affect drug efficacy, metabolism, and potential side effects.
+                    </div>
+                </div>
+                
+                <div class="subsection">
+                    <h3 class="subsection-title">4. Interaction Score</h3>
+                    <div class="subsection-content">
+                        A numerical value (0-10) representing the strength of evidence for a drug-gene interaction, based on published research and clinical data.
+                    </div>
+                </div>
+                
+                <div class="subsection">
+                    <h3 class="subsection-title">5. MDD (Major Depressive Disorder)</h3>
+                    <div class="subsection-content">
+                        A mental health condition characterized by persistent feelings of sadness and loss of interest. DGIT focuses on genes, proteins, and drugs associated with MDD research.
+                    </div>
+                </div>
+
+                <div class="subsection">
+                    <h3 class="subsection-title">6. Interaction Types</h3>
+                    <div class="subsection-content">
+                        <div style="margin-bottom: 12px;">
+                            <strong>Inhibitor:</strong> A drug that decreases or blocks the activity of a gene or protein, preventing it from performing its normal function. This can reduce unwanted biological processes or symptoms.
+                        </div>
+                        <div style="margin-bottom: 12px;">
+                            <strong>Activator:</strong> A drug that increases or enhances the activity of a gene or protein, promoting its normal function and amplifying beneficial biological responses.
+                        </div>
+                        <div>
+                            <strong>Drug Target:</strong> A gene or protein that a drug is designed to interact with to produce a therapeutic effect. The drug may inhibit, activate, or otherwise modulate the target's activity.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Chatbot Toggle Button -->
+    <button id="aiToggleBtn" style="position:fixed;bottom:20px;right:20px;z-index:1000;padding:10px 15px;border-radius:50%;background:#4caf50;color:white;border:none;font-size:18px;cursor:pointer;">💬</button>
+
+    <!-- Floating AI Chat Panel -->
+    <div id="aiPanel" style="display:none;position:fixed;bottom:70px;right:20px;width:300px;height:400px;background:white;border:1px solid #ccc;border-radius:10px;box-shadow:0 4px 8px rgba(0,0,0,0.2);z-index:1000;flex-direction:column;overflow:hidden;">
+        <div id="aiPanelHeader" style="background:#4caf50;color:white;padding:10px;font-weight:bold;border-top-left-radius:10px;border-top-right-radius:10px;">AI Assistant</div>
+        <div id="aiPanelBody" style="flex:1;padding:10px;overflow-y:auto;background:#f9f9f9;"></div>
+        <div id="aiInputContainer" style="display:flex;border-top:1px solid #ccc;">
+            <input type="text" id="aiInput" placeholder="Ask something..." style="flex:1;padding:8px;border:none;border-radius:0 0 0 10px;">
+            <button id="aiSend" style="padding:8px 12px;border:none;background:#4caf50;color:white;cursor:pointer;border-radius:0 0 10px 0;">Send</button>
+        </div>
+    </div>
+
+    <!-- Include Markdown parser -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <script>
+        const aiToggleBtn = document.getElementById('aiToggleBtn');
+        const aiPanel = document.getElementById('aiPanel');
+        const aiInput = document.getElementById('aiInput');
+        const aiSend = document.getElementById('aiSend');
+        const aiBody = document.getElementById('aiPanelBody');
+
+        // Toggle AI panel visibility
+        aiToggleBtn.addEventListener('click', () => {
+            aiPanel.style.display = aiPanel.style.display === 'flex' ? 'none' : 'flex';
+            aiPanel.style.flexDirection = 'column';
+        });
+
+        // Append message to chat panel
+        function appendMessage(text, sender='user') {
+            const p = document.createElement('p');
+            p.style.margin = '5px 0';
+            if(sender === 'ai'){
+                // Render Markdown for AI messages
+                p.innerHTML = marked.parse(text);
+                p.style.color = '#000';
+            } else {
+                p.textContent = text;
+                p.style.fontWeight = 'bold';
+                p.style.color = '#333';
+            }
+            aiBody.appendChild(p);
+            aiBody.scrollTop = aiBody.scrollHeight;
+        }
+
+        // Send question to backend
+        async function sendQuestion() {
+            const question = aiInput.value.trim();
+            if(!question) return;
+            appendMessage("You: " + question, 'user');
+            aiInput.value = '';
+
+            try {
+                const response = await fetch('/ask', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ question })
+                });
+                const data = await response.json();
+                appendMessage("DGIT AI Assistant: " + data.answer, 'ai');
+            } catch (err) {
+                appendMessage("DGIT AI Assistant: Error contacting server.", 'ai');
+            }
+        }
+
+        aiSend.addEventListener('click', sendQuestion);
+        aiInput.addEventListener('keypress', (e) => {
+            if(e.key === 'Enter') sendQuestion();
+        });
+    </script>
+</body>
+</html>
