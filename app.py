@@ -374,9 +374,35 @@ def nav():
       return render_template('nav.html')
   return render_template('nav.html')
 
+# About page of DGIT
 @app.route('/about', methods=['GET'])
 def about():
     return render_template('about.html')
+
+# Contact page of DGIT
+@app.route('/contact', methods=['GET', 'POST'])
+def contact():
+    success = False
+    error = None
+    
+    if request.method == 'POST':
+        name = request.form.get('name')
+        email = request.form.get('email')
+        message = request.form.get('message')
+        
+        # Validate the form
+        if not name or not email or not message:
+            error = "All fields are required."
+        else:
+            # Here you can save to database, send email, etc.
+            # For now, we'll just show a success message
+            print(f"Contact form submission:")
+            print(f"Name: {name}")
+            print(f"Email: {email}")
+            print(f"Message: {message}")
+            success = True
+    
+    return render_template('contact.html', success=success, error=error)
 
 @app.route("/ask", methods=["POST"])
 def ask():

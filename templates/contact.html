@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Contact Us</title>
+    
+    <!-- Navigation Styles -->
+    <link rel="stylesheet" type="text/css" href="../static/nav.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Caprasimo&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background-color: #f4ebe6;
+            min-height: 100vh;
+        }
+        
+        .page-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        
+        .page-title {
+            text-align: center;
+            font-size: 3rem;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        
+        .page-subtitle {
+            text-align: center;
+            font-size: 1.1rem;
+            color: #666;
+            margin-bottom: 40px;
+        }
+        
+        .content-wrapper {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        @media (max-width: 768px) {
+            .content-wrapper {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .contact-box {
+            background: white;
+            border-radius: 20px;
+            padding: 50px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .info-box {
+            padding: 20px 0;
+        }
+        
+        .info-title {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        
+        .info-section {
+            margin-bottom: 25px;
+        }
+        
+        .info-section:last-child {
+            margin-bottom: 0;
+        }
+        
+        .info-label {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .info-text {
+            color: #555;
+            line-height: 1.6;
+        }
+        
+        .info-text a {
+            color: #c74a4a;
+            text-decoration: none;
+        }
+        
+        .info-text a:hover {
+            text-decoration: underline;
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        .form-label {
+            display: block;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+        
+        .form-input,
+        .form-textarea {
+            width: 100%;
+            padding: 12px 15px;
+            font-size: 1rem;
+            font-family: 'DM Sans', sans-serif;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            transition: border-color 0.3s;
+        }
+        
+        .form-input:focus,
+        .form-textarea:focus {
+            outline: none;
+            border-color: #c74a4a;
+        }
+        
+        .form-textarea {
+            resize: vertical;
+            min-height: 150px;
+        }
+        
+        .submit-btn {
+            background-color: #c74a4a;
+            color: white;
+            padding: 12px 40px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            width: 100%;
+        }
+        
+        .submit-btn:hover {
+            background-color: #a83d3d;
+        }
+        
+        .success-message {
+            background-color: #4caf50;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .error-message {
+            background-color: #f44336;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav>
+        <a href="/" class="title">DGIT</a>
+        <div class="menu container">
+            <a href="/search" class="menu">Search</a>
+            <a href="/about" class="menu">About</a>
+            <a href="/db" class="menu">Database</a>
+            <a href="/contact" class="menu">Contact</a>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="page-container">
+        <h1 class="page-title">Contact Us</h1>
+        <p class="page-subtitle">Want to get in touch? We'd love to hear from you. Here's how you can reach us.</p>
+        
+        <div class="content-wrapper">
+            <!-- Company Information -->
+            <div class="info-box">
+                <h2 class="info-title">Our Information</h2>
+                
+                <div class="info-section">
+                    <div class="info-label">Email</div>
+                    <div class="info-text">
+                        <a href="mailto:DGIT@sjsu.edu">DGIT@sjsu.edu</a>
+                    </div>
+                </div>
+                
+                <div class="info-section">
+                    <div class="info-label">About DGIT</div>
+                    <div class="info-text">
+                        DGIT is a comprehensive platform for exploring drug-gene interactions related to Major Depressive Disorder (MDD). We provide researchers and healthcare professionals with easy access to interaction data, protein information, and AI-powered insights.
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Contact Form -->
+            <div class="contact-box">
+            {% if success %}
+            <div class="success-message">
+                Thank you for your message! We'll get back to you soon.
+            </div>
+            {% endif %}
+            
+            {% if error %}
+            <div class="error-message">
+                {{ error }}
+            </div>
+            {% endif %}
+            
+            <form method="POST" action="/contact">
+                <div class="form-group">
+                    <label for="name" class="form-label">Name *</label>
+                    <input 
+                        type="text" 
+                        id="name" 
+                        name="name" 
+                        class="form-input" 
+                        placeholder="Enter your name"
+                        required
+                        value="{{ request.form.get('name', '') if request.form else '' }}"
+                    >
+                </div>
+                
+                <div class="form-group">
+                    <label for="email" class="form-label">Email *</label>
+                    <input 
+                        type="email" 
+                        id="email" 
+                        name="email" 
+                        class="form-input" 
+                        placeholder="Enter your email"
+                        required
+                        value="{{ request.form.get('email', '') if request.form else '' }}"
+                    >
+                </div>
+                
+                <div class="form-group">
+                    <label for="message" class="form-label">Message *</label>
+                    <textarea 
+                        id="message" 
+                        name="message" 
+                        class="form-textarea" 
+                        placeholder="Enter your message"
+                        required
+                    >{{ request.form.get('message', '') if request.form else '' }}</textarea>
+                </div>
+                
+                <button type="submit" class="submit-btn">Send Message</button>
+            </form>
+        </div>
+        </div>
+    </div>
+
+
+</body>
+</html>
