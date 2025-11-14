@@ -90,6 +90,7 @@ def parseGeneResults(json_data):
         for it in n.get("interactions", []) or []:
             drug = it.get("drug") or {}
             types = ", ".join([t.get("type","") for t in (it.get("interactionTypes") or []) if t.get("type")]) or "—"
+            type_list = [t.get("type","") for t in (it.get("interactionTypes") or []) if t.get("type")]
             dirs  = ", ".join([t.get("directionality","") for t in (it.get("interactionTypes") or []) if t.get("directionality")]) or "—"
             sources = ", ".join([s.get("sourceDbName","") for s in (it.get("sources") or []) if s.get("sourceDbName")]) or "—"
             pmids = ", ".join([str(p.get("pmid")) for p in (it.get("publications") or []) if p.get("pmid")]) or "—"
@@ -97,11 +98,17 @@ def parseGeneResults(json_data):
                 "left_label": "Gene",
                 "left_name": n.get("name") or "",
                 "left_cid": n.get("conceptId") or "",
+
                 "right_label": "Drug",
                 "right_name": drug.get("name") or "",
                 "right_cid": drug.get("conceptId") or "",
-                "types": types, "directions": dirs, "score": it.get("interactionScore"),
-                "sources": sources, "pmids": pmids
+
+                "types": types,
+                "interaction_type_list": type_list,
+                "directions": dirs,
+                "score": it.get("interactionScore"),
+                "sources": sources,
+                "pmids": pmids
             })
     return rows
 
@@ -149,6 +156,7 @@ def parseDrugResults(json_data):
         for it in n.get("interactions", []) or []:
             gene = it.get("gene") or {}
             types = ", ".join([t.get("type","") for t in (it.get("interactionTypes") or []) if t.get("type")]) or "—"
+            type_list = [t.get("type","") for t in (it.get("interactionTypes") or []) if t.get("type")]
             dirs  = ", ".join([t.get("directionality","") for t in (it.get("interactionTypes") or []) if t.get("directionality")]) or "—"
             sources = ", ".join([s.get("sourceDbName","") for s in (it.get("sources") or []) if s.get("sourceDbName")]) or "—"
             pmids = ", ".join([str(p.get("pmid")) for p in (it.get("publications") or []) if p.get("pmid")]) or "—"
@@ -156,11 +164,17 @@ def parseDrugResults(json_data):
                 "left_label": "Drug",
                 "left_name": n.get("name") or "",
                 "left_cid": n.get("conceptId") or "",
+
                 "right_label": "Gene",
                 "right_name": gene.get("longName") or gene.get("name") or "",
                 "right_cid": gene.get("conceptId") or "",
-                "types": types, "directions": dirs, "score": it.get("interactionScore"),
-                "sources": sources, "pmids": pmids
+
+                "types": types,
+                "interaction_type_list": type_list,
+                "directions": dirs,
+                "score": it.get("interactionScore"),
+                "sources": sources,
+                "pmids": pmids
             })
     return rows
 
@@ -365,8 +379,20 @@ def search():
                     except requests.RequestException as e:
                         error = f"Failed to query DGIdb API: {str(e)}"
 
-    return render_template('search.html', results=results, error=error, mdd_list=mdd_list, search_type=search_type, 
-                           query=query_value,rows=rows)
+    # Collect all interaction types for pie chart visualization
+    interaction_types = []
+    for r in rows:
+        interaction_types.extend(r.get("interaction_type_list", []))
+
+    return render_template(
+    'search.html',
+    results=results,
+    error=error,
+    mdd_list=mdd_list,
+    search_type=search_type,
+    query=query_value,
+    rows=rows,
+    interaction_types=interaction_types)
 
 @app.route('/nav', methods=['GET'])
 def nav():
