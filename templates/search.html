@@ -159,10 +159,12 @@
             </div>
 
             <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+            <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+
             <script>
                 const scoreData = JSON.parse('{{ rows | tojson | safe }}');
 
-                // ✅ Sort by score (descending)
+                // Sort by score (descending)
                 const sortedData = scoreData.sort((a, b) => (b.score || 0) - (a.score || 0));
 
                 // Recreate arrays after sorting
@@ -220,6 +222,54 @@
 
                 });
             </script>
+
+            <!-- INTERACTION TYPE PIE CHART -->
+            {% if interaction_types and interaction_types|length > 0 %}
+            <h2 style="margin-top:2rem;">Type Of Interacting Molecule</h2>
+
+            <div style="width:450px; height:450px;">
+                <canvas id="typeChart"></canvas>
+            </div>
+
+            <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+            <script>
+                const rawTypes = JSON.parse('{{ interaction_types | tojson | safe }}');
+
+                const typeCounts = {};
+                rawTypes.forEach(t => {
+                    if (!typeCounts[t]) typeCounts[t] = 0;
+                    typeCounts[t]++;
+                });
+
+                const labelsT = Object.keys(typeCounts);
+                const countsT = Object.values(typeCounts);
+
+                new Chart(document.getElementById('typeChart'), {
+                    type: 'pie',
+                    data: {
+                        labels: labelsT,
+                        datasets: [{
+                            data: countsT,
+                            backgroundColor: [
+                                '#5DA5DA','#F17CB0','#60BD68','#B2912F','#F15854',
+                                '#9C755F','#B276B2','#4E79A7','#FF9DA7','#76B7B2'
+                            ]
+                        }]
+                    },
+                    options: {
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'DGIdb Interaction Types'
+                            }
+                        }
+                    }
+                });
+            </script>
+            <p>Agonist: a molecule that binds to a receptor and activates it to produce a biological response.</p>
+            <p>Inhibitor: a molecule that binds to an enzyme or receptor to block or reduce its activity.</p>
+            {% endif %}
+
 
 
             {% elif (search_type or request.form.get('type')) and not mdd_list %}
