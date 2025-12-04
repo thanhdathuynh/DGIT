@@ -219,9 +219,32 @@ def fetchProteinResults(protein_name: str):
         return None, f"UniProt request failed: {e}"
 
 def extract_gene_from_question(question):
-    #Simple regex to find uppercase gene names (e.g., SLC6A4, BDNF)
-    matches = re.findall(r'\b[A-Z0-9]{2,10}\b', question)
-    return matches[0] if matches else None
+    # Conservative gene extraction:
+    # 1) Check known aliases and MDD gene list (case-insensitive)
+    # 2) Otherwise, accept tokens that look like gene symbols with letters+digits (e.g., TP53)
+    if not question or not isinstance(question, str):
+        return None
+    text = question.upper()
+
+    # check aliases and known genes first
+    for k, v in GENE_ALIASES.items():
+        if k in text:
+            return v
+    for g in MDD_GENES:
+        if g.upper() in text:
+            return g.upper()
+
+    # token scan: look for patterns like LETTERS+DIGITS (common gene symbols)
+    tokens = re.findall(r"\b[A-Z0-9]{2,10}\b", text)
+    for t in tokens:
+        # ignore purely numeric tokens and common abbreviations like MDD
+        if t.isdigit() or t == 'MDD':
+            continue
+        # accept tokens that contain at least one letter and one digit (e.g., TP53, HTR2A has letters and digit)
+        if re.search(r"[A-Z]", t) and re.search(r"[0-9]", t):
+            return t
+
+    return None
 
 def fetch_ncbi_summary(term):
     try:
