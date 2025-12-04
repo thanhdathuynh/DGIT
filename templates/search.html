@@ -296,8 +296,14 @@
         function appendMessage(text, sender='user') {
             const p = document.createElement('p');
             if(sender === 'ai'){
-                // Render Markdown for AI messages
-                p.innerHTML = marked.parse(text);
+                const m = text.match(/^(.+?):\s*([\s\S]*)$/);
+                if(m){
+                    const label = m[1];
+                    const body = m[2];
+                    p.innerHTML = marked.parse(`**${label}:** ${body}`);
+                } else {
+                    p.innerHTML = marked.parse(text);
+                }
                 p.style.color = '#000';
             } else {
                 p.innerHTML = '<strong>You:</strong> ' + text;
