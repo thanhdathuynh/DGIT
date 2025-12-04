@@ -4,6 +4,7 @@
   <!--test-->  
     <title>DGIdb Search</title>
     <link rel="stylesheet" type="text/css" href="../static/search.css">
+    <link rel="stylesheet" type="text/css" href="../static/index.css">
 
     <!--For navbar-->
     <link rel="stylesheet" type="text/css" href="../static/nav.css" >
@@ -25,35 +26,44 @@
         </div>
     </nav>
 
-    <h1>Gene-Drug Interaction Search</h1>
+    <div class="page-container">
+        <div class="hero-section">
+            <h1 class="hero-title">Gene-Drug Interaction Search</h1>
+            <p class="hero-subtitle">Search genes, drugs, or proteins to explore interaction evidence and visualizations focused on MDD research.</p>
+        </div>
 
-    {% if error %}
-    <p class="error">{{ error }}</p>
-    {% endif %}
+        <div class="content-box">
+            {% if error %}
+            <p class="error">{{ error }}</p>
+            {% endif %}
 
-    <form method="POST" action="/search">
-        <input type="text" name="query" placeholder="Enter gene or drug">
+            <form method="POST" action="/search" class="search-form">
+                <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
+                    <input type="text" name="query" placeholder="Enter gene or drug" style="flex:1;padding:10px;border-radius:8px;border:1px solid #ddd;">
 
-        <select name="type" required>
-        <option value="" disabled
-            {% if not (search_type if search_type is defined else request.form.get('type')) %}selected{% endif %}>
-            Select type
-        </option>
-        <option value="gene"
-            {% if (search_type if search_type is defined else request.form.get('type')) == 'gene' %}selected{% endif %}>
-            Gene
-        </option>
-        <option value="drug"
-            {% if (search_type if search_type is defined else request.form.get('type')) == 'drug' %}selected{% endif %}>
-            Drug
-        </option>
-        <option value="protein"
-            {% if (search_type if search_type is defined else request.form.get('type')) == 'protein' %}selected{% endif %}>
-            Protein
-        </option>
-        </select>
-        <button type="submit">Search</button>
-    </form>
+                    <select name="type" required style="padding:10px;border-radius:8px;border:1px solid #ddd;">
+                    <option value="" disabled
+                        {% if not (search_type if search_type is defined else request.form.get('type')) %}selected{% endif %}>
+                        Select type
+                    </option>
+                    <option value="gene"
+                        {% if (search_type if search_type is defined else request.form.get('type')) == 'gene' %}selected{% endif %}>
+                        Gene
+                    </option>
+                    <option value="drug"
+                        {% if (search_type if search_type is defined else request.form.get('type')) == 'drug' %}selected{% endif %}>
+                        Drug
+                    </option>
+                    <option value="protein"
+                        {% if (search_type if search_type is defined else request.form.get('type')) == 'protein' %}selected{% endif %}>
+                        Protein
+                    </option>
+                    </select>
+
+                    <button type="submit" class="cta-button">Search</button>
+                </div>
+            </form>
+        </div>
 
     {% if mdd_list %}
         <h3>Common MDD {{ 'Genes' if (search_type or request.form.get('type')) == 'gene' else 'Drugs' }}</h3>
@@ -66,6 +76,7 @@
 
 
     {% if results %}
+        <div class="content-box">
         {% if not (rows and rows|length > 0) %}
             <h2>Results</h2>
         {% endif %}
@@ -262,7 +273,9 @@
                 <summary>Raw Response (debug)</summary>
                 <pre>{{ results | tojson(indent=2) }}</pre>
             </details>
+        </div>
         {% endif %}
+    </div>
     <!-- AI Chatbot Toggle Button -->
     <button id="aiToggleBtn">💬</button>
 

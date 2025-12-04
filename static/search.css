@@ -51,6 +51,26 @@ table.fullwidth {
     width: 100%;
 }
 
+table.fullwidth th, table.fullwidth td {
+    padding: 12px 10px;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+}
+
+table.fullwidth thead th {
+    background: #faf5f3;
+    color: #333;
+    font-weight: 700;
+}
+
+table.fullwidth tbody tr:nth-child(even) {
+    background: #fffaf9;
+}
+
+.content-box table.fullwidth {
+    border: none;
+}
+
 .small-muted { color: #666; }
 
 .scroll-container {
