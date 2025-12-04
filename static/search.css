@@ -1,0 +1,74 @@
+/* Search page specific styles */
+body {
+    font-family: 'DM Sans', sans-serif;
+}
+
+select, input, button {
+    font-size: 16px;
+    margin: 5px 0;
+}
+
+pre {
+    background: #f4f4f4;
+    padding: 10px;
+}
+
+.error {
+    color: red;
+}
+
+.clickable-drug {
+    cursor: pointer;
+    color: #0077ff;
+    text-decoration: underline;
+}
+.clickable-drug:hover { color: #084db3; }
+
+.clickable-protein {
+    cursor: pointer;
+    color: #0077ff;
+    text-decoration: underline;
+}
+.clickable-protein:hover { color: #084db3; }
+
+/* Badges for MDD list */
+.badges {
+    display:flex;
+    flex-wrap:wrap;
+    gap:.4rem;
+    margin:.5rem 0;
+}
+.badge {
+    border:1px solid #ddd;
+    padding:.1rem .5rem;
+    border-radius:999px;
+    background: #fff;
+}
+
+/* make tables full width and tidy */
+table.fullwidth {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+.small-muted { color: #666; }
+
+.scroll-container {
+    width:100%;
+    overflow-x:auto;
+    border:1px solid #ddd;
+    padding:10px;
+}
+
+.mt-large { margin-top: 1.5rem; }
+.mt-xlarge { margin-top: 2rem; }
+
+.details { margin-top: 1rem; }
+
+.muted { color: #666; }
+
+/* Chart container */
+.chart-container {
+    width: 450px;
+    height: 450px;
+}

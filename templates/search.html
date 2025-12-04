@@ -3,28 +3,11 @@
 <head>
   <!--test-->  
     <title>DGIdb Search</title>
-    <style>
-        body { font-family: Arial, sans-serif}
-        select, input, button { font-size: 16px; margin: 5px 0; }
-        pre { background: #f4f4f4; padding: 10px; }
-        .error { color: red; }
-        .clickable-drug {
-            cursor: pointer; color: #0077ff; text-decoration: underline; }
-        .clickable-drug:hover {color: #084db3;}
-        .clickable-protein {
-            cursor: pointer;
-            color: #0077ff;
-            text-decoration: underline;
-        }
-        .clickable-protein:hover {
-            color: #084db3;
-        }
-
-
-    </style>
+    <link rel="stylesheet" type="text/css" href="../static/search.css">
 
     <!--For navbar-->
     <link rel="stylesheet" type="text/css" href="../static/nav.css" >
+    <link rel="stylesheet" type="text/css" href="../static/ai-chatbot.css">
         <!--Google Fonts-->
     <link href="https://fonts.googleapis.com/css2?family=Caprasimo&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap" rel="stylesheet">
@@ -74,9 +57,9 @@
 
     {% if mdd_list %}
         <h3>Common MDD {{ 'Genes' if (search_type or request.form.get('type')) == 'gene' else 'Drugs' }}</h3>
-        <div style="display:flex; flex-wrap:wrap; gap:.4rem; margin:.5rem 0;">
+        <div class="badges">
             {% for item in mdd_list %}
-            <span style="border:1px solid #ddd; padding:.1rem .5rem; border-radius:999px;">{{ item }}</span>
+            <span class="badge">{{ item }}</span>
             {% endfor %}
         </div>
     {% endif %}
@@ -89,7 +72,7 @@
 
         {% if rows and search_type == 'protein' %}
             <h2>Protein Results</h2>
-            <table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse; width:100%;">
+            <table class="fullwidth" border="1" cellpadding="6" cellspacing="0">
                 <thead>
                 <tr>
                     <th>Short Name</th>
@@ -123,7 +106,7 @@
 
         {% if rows and rows|length > 0 and search_type != 'protein'%}
             <h2>Results</h2>
-            <table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse; width:100%;">
+            <table class="fullwidth" border="1" cellpadding="6" cellspacing="0">
                     <thead>
                     <tr>
                         <th>{{ rows[0].left_label }}</th>
@@ -138,8 +121,8 @@
                     <tbody>
                     {% for r in rows %}
                         <tr>
-                        <td><strong>{{ r.left_name or '—' }}</strong><br><small style="color:#666">{{ r.left_cid or '' }}</small></td>
-                        <td><strong class = "clickable-drug">{{ r.right_name or '—' }}</strong><br><small style="color:#666">{{ r.right_cid or '' }}</small></td>
+                        <td><strong>{{ r.left_name or '—' }}</strong><br><small class="small-muted">{{ r.left_cid or '' }}</small></td>
+                        <td><strong class = "clickable-drug">{{ r.right_name or '—' }}</strong><br><small class="small-muted">{{ r.right_cid or '' }}</small></td>
                         <td>{{ r.types }}</td>
                         <td>{{ r.directions }}</td>
                         <td>{{ r.score if r.score is not none else '—' }}</td>
@@ -150,11 +133,10 @@
                 </tbody>
             </table>
 
-            <h2 style="margin-top:1.5rem;">Interaction Strength (Strength of Evidence of Interaction)</h2>
+            <h2 class="mt-large">Interaction Strength (Strength of Evidence of Interaction)</h2>
             
             <!--this is for the visualization of the interaction scores-->
-            <div id="scroll-container"
-                style="width:100%; overflow-x:auto; border:1px solid #ddd; padding:10px;">
+            <div id="scroll-container" class="scroll-container">
                 <canvas id="scoreChart" height="400"></canvas>
             </div>
 
@@ -225,9 +207,9 @@
 
             <!-- INTERACTION TYPE PIE CHART -->
             {% if interaction_types and interaction_types|length > 0 %}
-            <h2 style="margin-top:2rem;">Type Of Interacting Molecule</h2>
+            <h2 class="mt-xlarge">Type Of Interacting Molecule</h2>
 
-            <div style="width:450px; height:450px;">
+            <div class="chart-container">
                 <canvas id="typeChart"></canvas>
             </div>
 
@@ -276,132 +258,131 @@
                 <p>No results.</p>
             {% endif %}
 
-            <details style="margin-top:1rem;">
+            <details class="details">
                 <summary>Raw Response (debug)</summary>
                 <pre>{{ results | tojson(indent=2) }}</pre>
             </details>
         {% endif %}
     <!-- AI Chatbot Toggle Button -->
-<button id="aiToggleBtn" style="position:fixed;bottom:20px;right:20px;z-index:1000;padding:10px 15px;border-radius:50%;background:#4caf50;color:white;border:none;font-size:18px;cursor:pointer;">💬</button>
+    <button id="aiToggleBtn">💬</button>
 
-<!-- Floating AI Chat Panel -->
-<div id="aiPanel" style="display:none;position:fixed;bottom:70px;right:20px;width:300px;height:400px;background:white;border:1px solid #ccc;border-radius:10px;box-shadow:0 4px 8px rgba(0,0,0,0.2);z-index:1000;flex-direction:column;overflow:hidden;">
-    <div id="aiPanelHeader" style="background:#4caf50;color:white;padding:10px;font-weight:bold;border-top-left-radius:10px;border-top-right-radius:10px;">AI Assistant</div>
-    <div id="aiPanelBody" style="flex:1;padding:10px;overflow-y:auto;background:#f9f9f9;"></div>
-    <div id="aiInputContainer" style="display:flex;border-top:1px solid #ccc;">
-        <input type="text" id="aiInput" placeholder="Ask something..." style="flex:1;padding:8px;border:none;border-radius:0 0 0 10px;">
-        <button id="aiSend" style="padding:8px 12px;border:none;background:#4caf50;color:white;cursor:pointer;border-radius:0 0 10px 0;">Send</button>
+    <!-- Floating AI Chat Panel -->
+    <div id="aiPanel">
+        <div id="aiPanelHeader">AI Assistant</div>
+        <div id="aiPanelBody"></div>
+        <div id="aiInputContainer">
+            <input type="text" id="aiInput" placeholder="Ask something...">
+            <button id="aiSend">Send</button>
+        </div>
     </div>
-</div>
 
-<!-- Include Markdown parser -->
-<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- Include Markdown parser -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
-<script>
-    const aiToggleBtn = document.getElementById('aiToggleBtn');
-    const aiPanel = document.getElementById('aiPanel');
-    const aiInput = document.getElementById('aiInput');
-    const aiSend = document.getElementById('aiSend');
-    const aiBody = document.getElementById('aiPanelBody');
+    <script>
+        const aiToggleBtn = document.getElementById('aiToggleBtn');
+        const aiPanel = document.getElementById('aiPanel');
+        const aiInput = document.getElementById('aiInput');
+        const aiSend = document.getElementById('aiSend');
+        const aiBody = document.getElementById('aiPanelBody');
 
-    // Toggle AI panel visibility
-    aiToggleBtn.addEventListener('click', () => {
-        aiPanel.style.display = aiPanel.style.display === 'flex' ? 'none' : 'flex';
-        aiPanel.style.flexDirection = 'column';
-    });
+        // Toggle AI panel visibility
+        aiToggleBtn.addEventListener('click', () => {
+            aiPanel.style.display = aiPanel.style.display === 'flex' ? 'none' : 'flex';
+            aiPanel.style.flexDirection = 'column';
+        });
 
-    // Append message to chat panel
-    function appendMessage(text, sender='user') {
-        const p = document.createElement('p');
-        p.style.margin = '5px 0';
-        if(sender === 'ai'){
-            // Render Markdown for AI messages
-            p.innerHTML = marked.parse(text);
-            p.style.color = '#000';
-        } else {
-            p.textContent = text;
-            p.style.fontWeight = 'bold';
-            p.style.color = '#333';
+        // Append message to chat panel
+        function appendMessage(text, sender='user') {
+            const p = document.createElement('p');
+            if(sender === 'ai'){
+                // Render Markdown for AI messages
+                p.innerHTML = marked.parse(text);
+                p.style.color = '#000';
+            } else {
+                p.innerHTML = '<strong>You:</strong> ' + text;
+                p.style.fontWeight = 'normal';
+                p.style.color = '#333';
+            }
+            aiBody.appendChild(p);
+            aiBody.scrollTop = aiBody.scrollHeight;
         }
-        aiBody.appendChild(p);
-        aiBody.scrollTop = aiBody.scrollHeight;
-    }
 
-    // Send question to backend
-    async function sendQuestion() {
-        const question = aiInput.value.trim();
-        if(!question) return;
-        appendMessage("You: " + question, 'user');
-        aiInput.value = '';
+        // Send question to backend
+        async function sendQuestion() {
+            const question = aiInput.value.trim();
+            if(!question) return;
+            appendMessage(question, 'user');
+            aiInput.value = '';
 
-        try {
-            const response = await fetch('/ask', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ question })
-            });
-            const data = await response.json();
-            appendMessage("DGIT AI Assistant: " + data.answer, 'ai');
-        } catch (err) {
-            appendMessage("DGIT AI Assistant: Error contacting server.", 'ai');
-        }
-    }
-
-    aiSend.addEventListener('click', sendQuestion);
-    aiInput.addEventListener('keypress', (e) => {
-        if(e.key === 'Enter') sendQuestion();
-    });
-
-    //Make table drug/gene names clickable
-    document.querySelectorAll(".clickable-drug").forEach(el => {
-        el.addEventListener("click", () => {
-            const name = el.textContent.trim();
-            aiPanel.style.display = 'flex';
-            appendMessage("You selected: " + name, 'user');
-
-            fetch('/details', {
-                method: 'POST',
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ query: name })
-            })
-            .then(res => res.json())
-            .then(data => {
+            try {
+                const response = await fetch('/ask', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ question })
+                });
+                const data = await response.json();
                 appendMessage("DGIT AI Assistant: " + data.answer, 'ai');
-
-                // Auto-open chat panel
-                aiPanel.style.display = 'flex';
-                aiPanel.style.flexDirection = 'column';
-            })
-            .catch(err => {
+            } catch (err) {
                 appendMessage("DGIT AI Assistant: Error contacting server.", 'ai');
+            }
+        }
+
+        aiSend.addEventListener('click', sendQuestion);
+        aiInput.addEventListener('keypress', (e) => {
+            if(e.key === 'Enter') sendQuestion();
+        });
+
+        //Make table drug/gene names clickable
+        document.querySelectorAll(".clickable-drug").forEach(el => {
+            el.addEventListener("click", () => {
+                const name = el.textContent.trim();
+                aiPanel.style.display = 'flex';
+                appendMessage("You selected: " + name, 'user');
+
+                fetch('/details', {
+                    method: 'POST',
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ query: name })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    appendMessage("DGIT AI Assistant: " + data.answer, 'ai');
+
+                    // Auto-open chat panel
+                    aiPanel.style.display = 'flex';
+                    aiPanel.style.flexDirection = 'column';
+                })
+                .catch(err => {
+                    appendMessage("DGIT AI Assistant: Error contacting server.", 'ai');
+                });
             });
         });
-    });
 
-    //Protein click → AI query
-    document.querySelectorAll(".clickable-protein").forEach(el => {
-        el.addEventListener("click", () => {
-            const name = el.textContent.trim();
-            aiPanel.style.display = 'flex';
-            appendMessage("You selected: " + name, 'user');
-
-            fetch('/details', {
-                method: 'POST',
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ query: name })
-            })
-            .then(res => res.json())
-            .then(data => {
-                appendMessage("DGIT AI Assistant: " + data.answer, 'ai');
+        //Protein click → AI query
+        document.querySelectorAll(".clickable-protein").forEach(el => {
+            el.addEventListener("click", () => {
+                const name = el.textContent.trim();
                 aiPanel.style.display = 'flex';
-                aiPanel.style.flexDirection = 'column';
-            })
-            .catch(err => {
-                appendMessage("DGIT AI Assistant: Error contacting server.", 'ai');
+                appendMessage("You selected: " + name, 'user');
+
+                fetch('/details', {
+                    method: 'POST',
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ query: name })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    appendMessage("DGIT AI Assistant: " + data.answer, 'ai');
+                    aiPanel.style.display = 'flex';
+                    aiPanel.style.flexDirection = 'column';
+                })
+                .catch(err => {
+                    appendMessage("DGIT AI Assistant: Error contacting server.", 'ai');
+                });
             });
         });
-    });
 
-</script>
+    </script>
 </body>
 </html>
