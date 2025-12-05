@@ -185,7 +185,37 @@ def is_project_question(question: str) -> bool:
             return True
     return False
 
-def ask_ai_google(question, interactions=None, ncbi_summary=None):
+
+def is_mdd_question(question: str) -> bool:
+    """Return True if the question appears to ask about Major Depressive Disorder
+    in any wording (e.g., 'MDD', 'major depressive disorder', 'major depression').
+    """
+    if not question or not isinstance(question, str):
+        return False
+    text = question.lower()
+    # match common variants: 'mdd', 'major depressive disorder', 'major depression'
+    if re.search(r"\bmdd\b", text):
+        return True
+    if re.search(r"major\s+depress", text):
+        return True
+    return False
+
+
+def is_naming_request(question: str) -> bool:
+    """Return True if the user asks to name/list examples of genes, proteins, or drugs.
+    This uses a simple heuristic on verbs like 'name', 'list', 'give me', 'examples of',
+    combined with entity keywords ('gene', 'protein', 'drug').
+    """
+    if not question or not isinstance(question, str):
+        return False
+    text = question.lower()
+    if not re.search(r"\b(name|list|give me|give|show|what are|examples|example|cite)\b", text):
+        return False
+    if re.search(r"\b(gene|genes|protein|proteins|drug|drugs)\b", text):
+        return True
+    return False
+
+def ask_ai_google(question, interactions=None, ncbi_summary=None, mdd_context=None):
     """
     Ask Gemini AI to summarize or explain a gene/drug/protein based on DGIdb and NCBI context.
     """
@@ -229,6 +259,31 @@ Answer:
                 return "\n".join(first_lines)
             return "This is outside of my scope."
 
+    # bold formatting for named entities
+    extra_instruction = ""
+    if is_naming_request(question):
+        extra_instruction = (
+            "\nImportant: if you list or name genes, proteins, or drugs, wrap each "
+            "name in double asterisks (Markdown bold), e.g., **TP53**, so it is easy to spot.\n"
+        )
+        # Require that listed entities are related to Major Depressive Disorder (MDD).
+        extra_instruction += (
+            "Only list genes, proteins, or drugs that are related to Major Depressive Disorder (MDD). "
+            "If you use examples, prefer items from the project's MDD lists when available.\n"
+        )
+
+    # If MDD context (lists) were provided by the caller, include them for grounding
+    if mdd_context and isinstance(mdd_context, dict):
+        lists_text = []
+        if mdd_context.get('genes'):
+            lists_text.append("Genes: " + ", ".join(mdd_context.get('genes')))
+        if mdd_context.get('proteins'):
+            lists_text.append("Proteins: " + ", ".join(mdd_context.get('proteins')))
+        if mdd_context.get('drugs'):
+            lists_text.append("Drugs: " + ", ".join(mdd_context.get('drugs')))
+        if lists_text:
+            context_text += "\nProject MDD lists:\n" + "\n".join(lists_text) + "\n"
+
     prompt = f"""
 You are an expert biomedical assistant that helps explain gene-drug interactions.
 
@@ -243,6 +298,7 @@ Instructions:
 2. If no DGIdb data but the question involves a gene or drug, describe what it is, what it does, and its biological or clinical role.
 3. Always mention the sources (e.g., "Based on DGIdb" or "According to NCBI").
 4. Keep the explanation under 150 words, factual, and easy to read.
+    {extra_instruction}
 
 Answer:
 """
@@ -254,6 +310,39 @@ Answer:
             proj_ctx = get_project_context()
             if proj_ctx:
                 context_text += f"\nProject README:\n{proj_ctx}\n"
+
+    # If the user asks about MDD in any form, always provide a concise summary
+    if is_mdd_question(question):
+        mdd_prompt = f"""
+You are an expert biomedical assistant. The user asked: {question}
+
+Task: Provide a concise (<=150 words) factual summary of Major Depressive Disorder (MDD). Prioritize information from authoritative sources, especially NCBI/NIH. Include typical core symptoms, common contributing factors (biological, genetic, environmental, psychological), and usual treatment approaches (psychotherapy, pharmacotherapy). End with a short source note like "(Source: NCBI)".
+
+Keep language non-judgmental and avoid giving specific medical advice.
+
+Answer:
+"""
+        try:
+            resp = client.models.generate_content(
+                model="gemini-2.0-flash",
+                contents=mdd_prompt
+            )
+            text = resp.text.strip()
+            if text:
+                return text
+        except Exception:
+            pass
+
+        # Fallback brief summary if model call fails
+        return (
+            "Major Depressive Disorder (MDD) is a common and serious mood disorder "
+            "characterized by persistent low mood, loss of interest or pleasure in most activities, "
+            "and other cognitive and physical symptoms (changes in sleep, appetite, energy, "
+            "concentration, or feelings of worthlessness). Causes are multifactorial and can include "
+            "genetic, biological, environmental, and psychological factors. Treatment often involves "
+            "psychotherapy, pharmacotherapy (antidepressant medications), or a combination of both. "
+            "(Source: NCBI summary.)"
+        )
 
     if not is_in_scope(question):
         return "This is outside of my scope."
