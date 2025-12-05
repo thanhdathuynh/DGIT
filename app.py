@@ -490,7 +490,13 @@ def ask():
 
         ncbi_summary = fetch_ncbi_summary(gene_name)
 
-    answer = ask_ai_google(question, interactions, ncbi_summary)
+    # Pass project MDD lists so the AI can prefer MDD-related examples when listing
+    mdd_ctx = {
+        'genes': MDD_GENES,
+        'proteins': MDD_PROTEINS,
+        'drugs': MDD_DRUGS,
+    }
+    answer = ask_ai_google(question, interactions, ncbi_summary, mdd_context=mdd_ctx)
     return jsonify({"answer": answer})
 
 @app.post('/details')
@@ -502,7 +508,13 @@ def ask_ai_route():
     if not query:
         return jsonify({"answer": "No query provided"}), 400
 
-    answer = ask_ai_google(query)
+    # Include MDD lists when asking for details so returned examples remain MDD-focused
+    mdd_ctx = {
+        'genes': MDD_GENES,
+        'proteins': MDD_PROTEINS,
+        'drugs': MDD_DRUGS,
+    }
+    answer = ask_ai_google(query, mdd_context=mdd_ctx)
     return jsonify({"answer": answer})
 
 
