@@ -47,11 +47,12 @@ pre {
 
 table.fullwidth {
     border-collapse: collapse;
-    width: auto; 
+    width: 100%; 
+    table-layout: auto;
 }
 
 table.fullwidth th, table.fullwidth td {
-    padding: 12px 10px;
+    padding: 12px 16px;
     text-align: left;
     border-bottom: 1px solid #eee;
 }
@@ -64,6 +65,10 @@ table.fullwidth thead th {
 
 table.fullwidth tbody tr:nth-child(even) {
     background: #fffaf9;
+}
+
+table.fullwidth tbody tr:hover {
+    background: #f9f3f0;
 }
 
 .content-box table.fullwidth {
@@ -110,6 +115,7 @@ table.fullwidth tbody tr:nth-child(even) {
     box-shadow: 0 2px 6px rgba(0,0,0,0.06);
     background: #fff;
     margin-top: 0.75rem;
+    width: 100%;
 }
 
 .table-filter {
