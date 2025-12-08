@@ -83,16 +83,34 @@
 
         {% if rows and search_type == 'protein' %}
             <h2>Protein Results</h2>
-            <input class="table-filter" type="text" placeholder="Filter results..." aria-label="Filter protein results">
+            
+            <div class="results-controls">
+                <div class="results-info">
+                    <span id="proteinResultCount">Showing 0 results</span>
+                    <input class="table-filter" id="proteinFilter" type="text" placeholder="Filter results..." aria-label="Filter protein results">
+                </div>
+                <div class="pagination-controls">
+                    <button id="proteinPrevBtn" class="pagination-btn">&larr; Previous</button>
+                    <select id="proteinRowsPerPage" class="rows-per-page">
+                        <option value="10">10 per page</option>
+                        <option value="25">25 per page</option>
+                        <option value="50">50 per page</option>
+                        <option value="100">100 per page</option>
+                    </select>
+                    <span id="proteinPageInfo">Page 1</span>
+                    <button id="proteinNextBtn" class="pagination-btn">Next &rarr;</button>
+                </div>
+            </div>
+
             <div class="table-wrapper">
-            <table class="fullwidth" cellpadding="6" cellspacing="0">
+            <table class="fullwidth protein-table" cellpadding="6" cellspacing="0">
                 <thead>
                 <tr>
-                    <th>Short Name</th>
-                    <th>Protein</th>
-                    <th>UniProt ID</th>
-                    <th>Organism</th>
-                    <th>Associated Genes</th>
+                    <th class="sortable" data-sort-key="name" data-order="desc">Short Name</th>
+                    <th class="sortable" data-sort-key="description" data-order="desc">Protein</th>
+                    <th class="sortable" data-sort-key="uniprot" data-order="desc">UniProt ID</th>
+                    <th class="sortable" data-sort-key="organism" data-order="desc">Organism</th>
+                    <th class="sortable" data-sort-key="genes" data-order="desc">Associated Genes</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -529,6 +547,104 @@
                             const num = parseFloat(cellText);
                             return isNaN(num) ? -Infinity : num;
                         }
+                        return cellText.toLowerCase();
+                    };
+
+                    filteredRows.sort((a, b) => {
+                        const va = getVal(a);
+                        const vb = getVal(b);
+                        if (va < vb) return nextOrder === 'asc' ? -1 : 1;
+                        if (va > vb) return nextOrder === 'asc' ? 1 : -1;
+                        return 0;
+                    });
+
+                    currentPage = 1;
+                    renderPage();
+                });
+            });
+
+            updateResultCount();
+            renderPage();
+        }
+
+        // Pagination and sorting for protein table
+        const proteinTable = document.querySelector('.protein-table');
+        if (proteinTable) {
+            const tbody = proteinTable.querySelector('tbody');
+            const allRows = Array.from(tbody.querySelectorAll('tr'));
+            let currentPage = 1;
+            let rowsPerPageVal = 10;
+            let filteredRows = [...allRows];
+
+            const resultCountSpan = document.getElementById('proteinResultCount');
+            const pageInfoSpan = document.getElementById('proteinPageInfo');
+            const prevBtn = document.getElementById('proteinPrevBtn');
+            const nextBtn = document.getElementById('proteinNextBtn');
+            const rowsPerPageSelect = document.getElementById('proteinRowsPerPage');
+
+            const updateResultCount = () => {
+                const count = filteredRows.length;
+                resultCountSpan.textContent = `Showing ${count} result${count !== 1 ? 's' : ''}`;
+            };
+
+            const renderPage = () => {
+                const totalPages = Math.ceil(filteredRows.length / rowsPerPageVal) || 1;
+                if (currentPage > totalPages) currentPage = totalPages;
+                if (currentPage < 1) currentPage = 1;
+
+                const start = (currentPage - 1) * rowsPerPageVal;
+                const end = start + rowsPerPageVal;
+                const visibleRows = filteredRows.slice(start, end);
+
+                allRows.forEach(r => r.style.display = 'none');
+                visibleRows.forEach(r => r.style.display = '');
+
+                pageInfoSpan.textContent = `Page ${currentPage} of ${totalPages}`;
+                prevBtn.disabled = currentPage === 1;
+                nextBtn.disabled = currentPage === totalPages;
+            };
+
+            rowsPerPageSelect.addEventListener('change', (e) => {
+                rowsPerPageVal = parseInt(e.target.value);
+                currentPage = 1;
+                renderPage();
+            });
+
+            prevBtn.addEventListener('click', () => {
+                currentPage--;
+                renderPage();
+            });
+
+            nextBtn.addEventListener('click', () => {
+                currentPage++;
+                renderPage();
+            });
+
+            // Update filter to work with pagination
+            const filterInput = document.getElementById('proteinFilter');
+            if (filterInput) {
+                filterInput.addEventListener('input', () => {
+                    const term = filterInput.value.trim().toLowerCase();
+                    filteredRows = allRows.filter(row => {
+                        return row.innerText.toLowerCase().includes(term);
+                    });
+                    currentPage = 1;
+                    updateResultCount();
+                    renderPage();
+                });
+            }
+
+            // Sortable headers
+            const sortableHeaders = proteinTable.querySelectorAll('th.sortable');
+            sortableHeaders.forEach((th, idx) => {
+                th.addEventListener('click', () => {
+                    const key = th.dataset.sortKey;
+                    const currentOrder = th.dataset.order === 'asc' ? 'asc' : 'desc';
+                    const nextOrder = currentOrder === 'asc' ? 'desc' : 'asc';
+                    th.dataset.order = nextOrder;
+
+                    const getVal = (row) => {
+                        const cellText = (row.cells[idx]?.innerText || '').trim();
                         return cellText.toLowerCase();
                     };
 
