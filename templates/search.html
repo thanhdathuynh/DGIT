@@ -83,7 +83,9 @@
 
         {% if rows and search_type == 'protein' %}
             <h2>Protein Results</h2>
-            <table class="fullwidth" border="1" cellpadding="6" cellspacing="0">
+            <input class="table-filter" type="text" placeholder="Filter results..." aria-label="Filter protein results">
+            <div class="table-wrapper">
+            <table class="fullwidth" cellpadding="6" cellspacing="0">
                 <thead>
                 <tr>
                     <th>Short Name</th>
@@ -112,19 +114,59 @@
                 {% endfor %}
                 </tbody>
             </table>
+            </div>
         {% endif %}
 
 
         {% if rows and rows|length > 0 and search_type != 'protein'%}
-            <h2>Results</h2>
-            <table class="fullwidth" border="1" cellpadding="6" cellspacing="0">
+            <h2>Interaction Strength (Strength of Evidence of Interaction)</h2>
+            <div id="scroll-container" class="scroll-container chart-block">
+                <canvas id="scoreChart" height="400"></canvas>
+            </div>
+
+            <!-- INTERACTION TYPE PIE CHART -->
+            {% if interaction_types and interaction_types|length > 0 %}
+            <h2 class="mt-large">Type Of Interacting Molecule</h2>
+
+            <div class="chart-wrapper">
+                <div class="chart-container">
+                    <canvas id="typeChart"></canvas>
+                </div>
+            </div>
+            <div class="interaction-notes">
+                <p>Agonist: a molecule that binds to a receptor and activates it to produce a biological response.</p>
+                <p>Inhibitor: a molecule that binds to an enzyme or receptor to block or reduce its activity.</p>
+            </div>
+            {% endif %}
+
+            <!-- Results Table with filter -->
+            <h2 class="mt-large">Results</h2>
+            <div class="results-controls">
+                <div class="results-info">
+                    <span id="resultCount">Showing 0 results</span>
+                </div>
+                <input class="table-filter" type="text" placeholder="Filter results..." aria-label="Filter results">
+                <div class="pagination-controls">
+                    <button id="prevBtn" class="pagination-btn">&larr; Previous</button>
+                    <select id="rowsPerPage" class="rows-per-page">
+                        <option value="10">10 per page</option>
+                        <option value="25">25 per page</option>
+                        <option value="50">50 per page</option>
+                        <option value="100">100 per page</option>
+                    </select>
+                    <span id="pageInfo">Page 1</span>
+                    <button id="nextBtn" class="pagination-btn">Next &rarr;</button>
+                </div>
+            </div>
+            <div class="table-wrapper">
+            <table class="fullwidth results-table" cellpadding="6" cellspacing="0">
                     <thead>
                     <tr>
-                        <th>{{ rows[0].left_label }}</th>
-                        <th>{{ rows[0].right_label }}</th>
-                        <th>Types</th>
-                        <th>Direction</th>
-                        <th>Score</th>
+                        <th class="sortable" data-sort-key="left">{{ rows[0].left_label }}</th>
+                        <th class="sortable" data-sort-key="right">{{ rows[0].right_label }}</th>
+                        <th class="sortable" data-sort-key="types">Types</th>
+                        <th class="sortable" data-sort-key="direction">Direction</th>
+                        <th class="sortable" data-sort-key="score">Interaction Strength</th>
                         <th>Sources</th>
                         <th>PMIDs</th>
                     </tr>
@@ -143,12 +185,6 @@
                     {% endfor %}
                 </tbody>
             </table>
-
-            <h2 class="mt-large">Interaction Strength (Strength of Evidence of Interaction)</h2>
-            
-            <!--this is for the visualization of the interaction scores-->
-            <div id="scroll-container" class="scroll-container">
-                <canvas id="scoreChart" height="400"></canvas>
             </div>
 
             <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -216,14 +252,7 @@
                 });
             </script>
 
-            <!-- INTERACTION TYPE PIE CHART -->
             {% if interaction_types and interaction_types|length > 0 %}
-            <h2 class="mt-xlarge">Type Of Interacting Molecule</h2>
-
-            <div class="chart-container">
-                <canvas id="typeChart"></canvas>
-            </div>
-
             <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
             <script>
                 const rawTypes = JSON.parse('{{ interaction_types | tojson | safe }}');
@@ -259,8 +288,6 @@
                     }
                 });
             </script>
-            <p>Agonist: a molecule that binds to a receptor and activates it to produce a biological response.</p>
-            <p>Inhibitor: a molecule that binds to an enzyme or receptor to block or reduce its activity.</p>
             {% endif %}
 
 
@@ -401,6 +428,126 @@
                 });
             });
         });
+
+        // Simple table filter for results (supports multiple tables)
+        document.querySelectorAll('.table-filter').forEach(input => {
+            input.addEventListener('input', () => {
+                const term = input.value.trim().toLowerCase();
+                let table = input.parentElement.querySelector('table');
+                if (!table) {
+                    const next = input.nextElementSibling;
+                    if (next && next.tagName === 'TABLE') table = next;
+                }
+                if (!table) return;
+                const rows = table.querySelectorAll('tbody tr');
+                rows.forEach(row => {
+                    const text = row.innerText.toLowerCase();
+                    row.style.display = text.includes(term) ? '' : 'none';
+                });
+            });
+        });
+
+        // Pagination and sorting for main results table
+        const resultsTable = document.querySelector('.results-table');
+        if (resultsTable) {
+            const tbody = resultsTable.querySelector('tbody');
+            const allRows = Array.from(tbody.querySelectorAll('tr'));
+            let currentPage = 1;
+            let rowsPerPageVal = 10;
+            let filteredRows = [...allRows];
+
+            const resultCountSpan = document.getElementById('resultCount');
+            const pageInfoSpan = document.getElementById('pageInfo');
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            const rowsPerPageSelect = document.getElementById('rowsPerPage');
+
+            const updateResultCount = () => {
+                const count = filteredRows.length;
+                resultCountSpan.textContent = `Showing ${count} result${count !== 1 ? 's' : ''}`;
+            };
+
+            const renderPage = () => {
+                const totalPages = Math.ceil(filteredRows.length / rowsPerPageVal) || 1;
+                if (currentPage > totalPages) currentPage = totalPages;
+                if (currentPage < 1) currentPage = 1;
+
+                const start = (currentPage - 1) * rowsPerPageVal;
+                const end = start + rowsPerPageVal;
+                const visibleRows = filteredRows.slice(start, end);
+
+                allRows.forEach(r => r.style.display = 'none');
+                visibleRows.forEach(r => r.style.display = '');
+
+                pageInfoSpan.textContent = `Page ${currentPage} of ${totalPages}`;
+                prevBtn.disabled = currentPage === 1;
+                nextBtn.disabled = currentPage === totalPages;
+            };
+
+            rowsPerPageSelect.addEventListener('change', (e) => {
+                rowsPerPageVal = parseInt(e.target.value);
+                currentPage = 1;
+                renderPage();
+            });
+
+            prevBtn.addEventListener('click', () => {
+                currentPage--;
+                renderPage();
+            });
+
+            nextBtn.addEventListener('click', () => {
+                currentPage++;
+                renderPage();
+            });
+
+            // Update filter to work with pagination
+            const filterInput = document.querySelector('.table-filter');
+            if (filterInput) {
+                filterInput.addEventListener('input', () => {
+                    const term = filterInput.value.trim().toLowerCase();
+                    filteredRows = allRows.filter(row => {
+                        return row.innerText.toLowerCase().includes(term);
+                    });
+                    currentPage = 1;
+                    updateResultCount();
+                    renderPage();
+                });
+            }
+
+            // Sortable headers
+            const sortableHeaders = resultsTable.querySelectorAll('th.sortable');
+            sortableHeaders.forEach((th, idx) => {
+                th.addEventListener('click', () => {
+                    const key = th.dataset.sortKey;
+                    const currentOrder = th.dataset.order === 'asc' ? 'asc' : 'desc';
+                    const nextOrder = currentOrder === 'asc' ? 'desc' : 'asc';
+                    th.dataset.order = nextOrder;
+
+                    const getVal = (row) => {
+                        const cellText = (row.cells[idx]?.innerText || '').trim();
+                        if (key === 'score') {
+                            const num = parseFloat(cellText);
+                            return isNaN(num) ? -Infinity : num;
+                        }
+                        return cellText.toLowerCase();
+                    };
+
+                    filteredRows.sort((a, b) => {
+                        const va = getVal(a);
+                        const vb = getVal(b);
+                        if (va < vb) return nextOrder === 'asc' ? -1 : 1;
+                        if (va > vb) return nextOrder === 'asc' ? 1 : -1;
+                        return 0;
+                    });
+
+                    currentPage = 1;
+                    renderPage();
+                });
+            });
+
+            updateResultCount();
+            renderPage();
+        }
 
     </script>
 </body>
