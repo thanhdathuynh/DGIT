@@ -1,11 +1,13 @@
 from flask import Flask, jsonify, request, render_template
 import requests
 from ai_helper import ask_ai_google
+from db_conn import get_cached_results, save_results, mysql, init_app
 import re
 
 app = Flask(__name__)
 DGIDB_API_URL = "https://dgidb.org/api/graphql"
-#API for genome info (maybe ucsc genome browser)
+init_app(app)
+mysql.init_app(app)
 
 MDD_GENES = [
     "SLC6A4",
@@ -273,6 +275,7 @@ def index():
       return render_template('index.html')
   return render_template('index.html')
 
+#search route
 @app.route('/search', methods=['GET', 'POST'])
 def search():
     results = None
@@ -287,77 +290,89 @@ def search():
         search_type = request.form.get('type')
         query_value = request.form.get('query', '').strip()
         query_value = normalize_term(search_type, query_value)
+
         if not search_type:
             error = "Please select a type."
+
         else:
             if query_value == '':
                 # Show full MDD list if query empty
                 if search_type == 'gene':
                     mdd_list = MDD_GENES
-                  
                 elif search_type == "protein":
                     mdd_list = MDD_PROTEINS
                 elif search_type == 'drug':
                     mdd_list = MDD_DRUGS
                 else:
                     error = "Invalid type selected."
+
             else:
-                # Query DGIdb API if input is not empty
-                if search_type == 'gene': #search interaction by gene
+                
+                # CHECK DATABASE CACHE FIRST
+                cached = get_cached_results(query_value, search_type)
+                if cached:
+                    print("Using cached DB results for:", query_value)
+                    results = cached.get("results")
+                    rows = cached.get("rows", [])
+                    interaction_types = cached.get("interaction_types", [])
+                    return render_template(
+                        'search.html',
+                        results=results,
+                        error=None,
+                        mdd_list=None,
+                        search_type=search_type,
+                        query=query_value,
+                        rows=rows,
+                        interaction_types=interaction_types
+                    )
+
+                
+                # IF NOT CACHED, CALL API
+                print("No cache found. Querying external API...")
+
+                if search_type == 'gene':  # Gene → Drug interactions
                     query = """
                     query($names: [String!]!) {
                       genes(names: $names) {
                         nodes {
                           interactions {
-                            drug {
-                              name
-                              conceptId
-                            }
+                            drug { name conceptId }
                             interactionScore
-                            interactionTypes {
-                              type
-                              directionality
-                            }
-                            interactionAttributes {
-                              name
-                              value
-                            }
-                            publications {
-                              pmid
-                            }
-                            sources {
-                              sourceDbName
-                            }
+                            interactionTypes { type directionality }
+                            publications { pmid }
+                            sources { sourceDbName }
                           }
                         }
                       }
                     }
                     """
-
                     variables = {"names": [query_value]}
+
                     try:
                         response = requests.post(DGIDB_API_URL, json={"query": query, "variables": variables}, timeout=20)
                         response.raise_for_status()
                         results = response.json()
+
                         if not results.get("errors"):
                             rows = parseGeneResults(results)
                         else:
                             error = results["errors"][0].get("message", "GraphQL error")
+
                     except requests.RequestException as e:
                         error = f"Failed to query DGIdb API: {e}"
 
                 elif search_type == 'protein':
-                  try:
-                      protein_json, uni_err = fetchProteinResults(query_value)
-                      if uni_err:
-                          error = uni_err
-                      else:
-                          results = protein_json
-                          rows = parseProteinResults(protein_json)
-                  except Exception as e:
-                      error = f"Failed to query UniProt: {e}"
+                    try:
+                        protein_json, uni_err = fetchProteinResults(query_value)
+                        if uni_err:
+                            error = uni_err
+                        else:
+                            results = protein_json
+                            rows = parseProteinResults(protein_json)
+                    except Exception as e:
+                        error = f"Failed to query UniProt: {e}"
 
-                else:  # search interaction by gene
+                else:  # drug-based search
                     query = """
                     query($names: [String!]!) {
                       drugs(names: $names) {
@@ -369,53 +384,61 @@ def search():
                               longName
                             }
                             interactionScore
-                            interactionTypes {
-                              type
-                              directionality
-                            }
-                            interactionAttributes {
-                              name
-                              value
-                            }
-                            publications {
-                              pmid
-                            }
-                            sources {
-                              sourceDbName
-                            }
+                            interactionTypes { type directionality }
+                            publications { pmid }
+                            sources { sourceDbName }
                           }
                         }
                       }
                     }
                     """
                     variables = {"names": [query_value]}
-                
+
                     try:
                         response = requests.post(DGIDB_API_URL, json={"query": query, "variables": variables}, timeout=20)
                         response.raise_for_status()
                         results = response.json()
 
                         if not results.get("errors"):
-                            rows = parseGeneResults(results) if search_type == "gene" else parseDrugResults(results)
+                            rows = parseDrugResults(results)
                         else:
                             error = results["errors"][0].get("message", "GraphQL error")
+
                     except requests.RequestException as e:
                         error = f"Failed to query DGIdb API: {str(e)}"
 
-    # Collect all interaction types for pie chart visualization
+
+                
+                # 3. SAVE RESULTS TO CACHE
+                if results and not error:
+                    interaction_types = []
+                    for r in rows:
+                        interaction_types.extend(r.get("interaction_type_list", []))
+
+                    data_to_save = {
+                        "results": results,
+                        "rows": rows,
+                        "interaction_types": interaction_types
+                    }
+
+                    save_results(query_value, search_type, data_to_save)
+                    print("Saved new results to DB cache")
+
+    # Collect types for visualization
     interaction_types = []
     for r in rows:
         interaction_types.extend(r.get("interaction_type_list", []))
 
     return render_template(
-    'search.html',
-    results=results,
-    error=error,
-    mdd_list=mdd_list,
-    search_type=search_type,
-    query=query_value,
-    rows=rows,
-    interaction_types=interaction_types)
+        'search.html',
+        results=results,
+        error=error,
+        mdd_list=mdd_list,
+        search_type=search_type,
+        query=query_value,
+        rows=rows,
+        interaction_types=interaction_types
+    )
 
 @app.route('/nav', methods=['GET'])
 def nav():
