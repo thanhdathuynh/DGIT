@@ -1,10 +1,11 @@
-from flask import Flask, jsonify, request, render_template
+from flask import Flask, jsonify, request, render_template, redirect
 import requests
 from ai_helper import ask_ai_google
 from db_conn import get_cached_results, save_results, mysql, init_app
 import re
 
 app = Flask(__name__)
+init_app(app)
 DGIDB_API_URL = "https://dgidb.org/api/graphql"
 init_app(app)
 mysql.init_app(app)
@@ -440,11 +441,11 @@ def search():
         interaction_types=interaction_types
     )
 
-@app.route('/nav', methods=['GET'])
-def nav():
-  if request.method == 'GET':
-      return render_template('nav.html')
-  return render_template('nav.html')
+# @app.route('/nav', methods=['GET'])
+# def nav():
+#   if request.method == 'GET':
+#       return render_template('nav.html')
+#   return render_template('nav.html')
 
 # About page of DGIT
 @app.route('/about', methods=['GET'])
@@ -466,15 +467,22 @@ def contact():
         if not name or not email or not message:
             error = "All fields are required."
         else:
-            # Here you can save to database, send email, etc.
-            # For now, we'll just show a success message
-            print(f"Contact form submission:")
-            print(f"Name: {name}")
-            print(f"Email: {email}")
-            print(f"Message: {message}")
-            success = True
+            try:
+                cur = mysql.connection.cursor()
+                cur.execute("""INSERT INTO messages (name, email, message) VALUES (%s, %s, %s)""", (name, email, message))
+                mysql.connection.commit()
+                cur.close()
+                return redirect('/contact?success=1')
+            except Exception as e:
+                print("DB insert error", e)
+                error = "There was a problem saving your message. Please try again later."
+                
     
     return render_template('contact.html', success=success, error=error)
+
+@app.route('/db', methods=['GET', 'POST'])
+def db():
+    return render_template('db.html')
 
 @app.route("/ask", methods=["POST"])
 def ask():

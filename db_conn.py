@@ -51,11 +51,24 @@ def initialize_database():
             );
         """)
 
-        conn.commit()
         print("Table `search_cache` ready.")
 
+
+
+        cursor.execute(f"""create table IF NOT EXISTS messages (
+                id int auto_increment primary key,
+                name varchar(100),
+                email varchar(100),
+                message text not null,
+                time timestamp default current_timestamp)""")
+        
+        print("Table 'messages' ready.")
+        
+        conn.commit()
         cursor.close()
         conn.close()
+
+
 
     except Exception as e:
         print("Error initializing database:", e)
