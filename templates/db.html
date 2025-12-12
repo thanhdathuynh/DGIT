@@ -5,6 +5,7 @@
     <link rel="stylesheet" type="text/css" href="../static/nav.css">
     <link rel="stylesheet" type="text/css" href="../static/db.css">
     <link rel="stylesheet" type="text/css" href="../static/search.css">
+    <link rel="stylesheet" type="text/css" href="../static/ai-chatbot.css">
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Caprasimo&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap" rel="stylesheet">
@@ -85,7 +86,6 @@
                             <th data-sort="type">Type</th>
                             <th data-sort="timestamp">Timestamp</th>
                             <th data-sort="results">Results</th>
-                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody id="cacheTableBody">
@@ -101,6 +101,22 @@
             </div>
         </div>
     </div>
+
+    <!-- AI Chatbot Toggle Button -->
+    <button id="aiToggleBtn">💬</button>
+
+    <!-- Floating AI Chat Panel -->
+    <div id="aiPanel">
+        <div id="aiPanelHeader">AI Assistant</div>
+        <div id="aiPanelBody"></div>
+        <div id="aiInputContainer">
+            <input type="text" id="aiInput" placeholder="Ask something...">
+            <button id="aiSend">Send</button>
+        </div>
+    </div>
+
+    <!-- Include Markdown parser -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
     <script>
         // Sample cache data - in production, this would come from your backend
@@ -162,6 +178,66 @@
         let sortColumn = null;
         let sortDirection = 'desc';
 
+        // AI Panel Setup
+        const aiToggleBtn = document.getElementById('aiToggleBtn');
+        const aiPanel = document.getElementById('aiPanel');
+        const aiInput = document.getElementById('aiInput');
+        const aiSend = document.getElementById('aiSend');
+        const aiBody = document.getElementById('aiPanelBody');
+
+        // Toggle AI panel visibility
+        aiToggleBtn.addEventListener('click', () => {
+            aiPanel.style.display = aiPanel.style.display === 'flex' ? 'none' : 'flex';
+            aiPanel.style.flexDirection = 'column';
+        });
+
+        // Append message to chat panel
+        function appendMessage(text, sender='user') {
+            const p = document.createElement('p');
+            if(sender === 'ai'){
+                const m = text.match(/^(.+?):\s*([\s\S]*)$/);
+                if(m){
+                    const label = m[1];
+                    const body = m[2];
+                    p.innerHTML = marked.parse(`**${label}:** ${body}`);
+                } else {
+                    p.innerHTML = marked.parse(text);
+                }
+                p.style.color = '#000';
+            } else {
+                p.innerHTML = '<strong>You:</strong> ' + text;
+                p.style.fontWeight = 'normal';
+                p.style.color = '#333';
+            }
+            aiBody.appendChild(p);
+            aiBody.scrollTop = aiBody.scrollHeight;
+        }
+
+        // Send question to backend
+        async function sendQuestion() {
+            const question = aiInput.value.trim();
+            if(!question) return;
+            appendMessage(question, 'user');
+            aiInput.value = '';
+
+            try {
+                const response = await fetch('/ask', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ question })
+                });
+                const data = await response.json();
+                appendMessage("DGIT AI Assistant: " + data.answer, 'ai');
+            } catch (err) {
+                appendMessage("DGIT AI Assistant: Error contacting server.", 'ai');
+            }
+        }
+
+        aiSend.addEventListener('click', sendQuestion);
+        aiInput.addEventListener('keypress', (e) => {
+            if(e.key === 'Enter') sendQuestion();
+        });
+
         // Update statistics
         function updateStats() {
             document.getElementById('totalQueries').textContent = cacheData.length;
@@ -206,13 +282,35 @@
 
             tbody.innerHTML = pageData.map(item => `
                 <tr>
-                    <td><strong>${item.query}</strong></td>
+                    <td><strong class="clickable-drug" data-query="${item.query}">${item.query}</strong></td>
                     <td><span class="query-badge badge-${item.type}">${item.type.toUpperCase()}</span></td>
                     <td class="timestamp">${formatTimestamp(item.timestamp)}</td>
                     <td><span class="result-count">${item.resultCount} results</span></td>
-                    <td><button class="view-btn" onclick="viewDetails(${item.id})">View</button></td>
                 </tr>
             `).join('');
+
+            // Add click handlers to query names
+            tbody.querySelectorAll('.clickable-drug').forEach(el => {
+                el.addEventListener('click', () => {
+                    const queryName = el.dataset.query;
+                    aiPanel.style.display = 'flex';
+                    aiPanel.style.flexDirection = 'column';
+                    appendMessage("You selected: " + queryName, 'user');
+
+                    fetch('/details', {
+                        method: 'POST',
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ query: queryName })
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        appendMessage("DGIT AI Assistant: " + data.answer, 'ai');
+                    })
+                    .catch(err => {
+                        appendMessage("DGIT AI Assistant: Error contacting server.", 'ai');
+                    });
+                });
+            });
 
             updatePagination();
         }
@@ -318,14 +416,6 @@
                 renderTable();
             });
         });
-
-        // View details function
-        function viewDetails(id) {
-            const item = cacheData.find(d => d.id === id);
-            if (item) {
-                window.location.href = `/search?query=${encodeURIComponent(item.query)}&type=${item.type}`;
-            }
-        }
 
         // Export to CSV
         function exportToCSV() {
