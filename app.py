@@ -269,7 +269,6 @@ def fetch_ncbi_summary(term):
     except Exception:
         return None
 
-#landing page of DGIT
 @app.route('/', methods=['GET'])
 def index():
   if request.method == 'GET':

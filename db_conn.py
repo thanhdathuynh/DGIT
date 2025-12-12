@@ -103,7 +103,6 @@ def get_cached_results(query, search_type):
         cursor.close()
 
         if row:
-            # row[0] contains the JSON string
             return json.loads(row[0])
 
         return None
